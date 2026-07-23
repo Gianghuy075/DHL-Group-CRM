@@ -52,3 +52,4 @@ kiosk-crm-v1/
 - Database source of truth: `../database/schema.sql`
 
 Do not add Supabase table access directly inside UI components. When business logic is implemented, add real service modules that call Supabase and keep page components focused on rendering state.
+
