@@ -1,6 +1,6 @@
 import { Modal } from './components/Modal.js';
 import { Toast } from './components/Toast.js';
-import { NAV_SECTIONS, PAGE_TITLES, REVIEWER_NAV_SECTIONS } from './constants/navigation.js';
+import { ADMIN_NAV_SECTIONS, USER_NAV_SECTIONS, REVIEWER_NAV_SECTIONS, PAGE_TITLES } from './constants/navigation.js';
 import { AppLayout } from './layouts/AppLayout.js';
 import { createRouter } from './router/index.js';
 import { getSupabaseStatus } from './supabase/client.js';
@@ -73,11 +73,32 @@ async function initApp() {
   }
 }
 
+function getRoleConfig(role) {
+  if (role === 'reviewer') {
+    return {
+      navSections: REVIEWER_NAV_SECTIONS,
+      allowedRoutes: new Set(['registration-requests', 'kiosks', 'kiosk-detail']),
+      defaultRoute: 'registration-requests',
+    };
+  }
+
+  if (role === 'user') {
+    return {
+      navSections: USER_NAV_SECTIONS,
+      allowedRoutes: new Set(['facebook-tasks', 'kiosks', 'kiosk-detail', 'payments']),
+      defaultRoute: 'facebook-tasks',
+    };
+  }
+
+  return {
+    navSections: ADMIN_NAV_SECTIONS,
+    allowedRoutes: new Set(Object.keys(routes)),
+    defaultRoute: 'dashboard',
+  };
+}
+
 function renderAuthenticatedApp(root, profile) {
-  const reviewer = profile.role === 'reviewer';
-  const navSections = reviewer ? REVIEWER_NAV_SECTIONS : NAV_SECTIONS;
-  const allowedRoutes = reviewer ? new Set(['registration-requests']) : new Set(Object.keys(routes));
-  const defaultRoute = reviewer ? 'registration-requests' : 'dashboard';
+  const { navSections, allowedRoutes, defaultRoute } = getRoleConfig(profile.role);
 
   if (!allowedRoutes.has(getRouteName())) window.location.hash = `#/${defaultRoute}`;
 

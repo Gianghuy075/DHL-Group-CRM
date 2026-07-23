@@ -51,8 +51,8 @@ const state = {
 export function PaymentsPage() {
   return `
     ${PageHeader({
-      title: 'Thanh toán',
-      description: 'Xác nhận thanh toán một lần để kích hoạt toàn bộ hồ sơ đăng ký.',
+      title: 'Duyệt & Quản lý Thanh toán',
+      description: 'Quản lý, đối soát và phê duyệt các giao dịch thanh toán Kiosk của khách hàng.',
     })}
     ${Toolbar({
       children: `
