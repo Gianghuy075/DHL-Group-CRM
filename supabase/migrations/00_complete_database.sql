@@ -142,8 +142,11 @@ CREATE INDEX IF NOT EXISTS idx_logs_created_at ON public.logs(created_at);
 -- ==========================================================================
 CREATE TABLE IF NOT EXISTS public.user_roles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL,
+    user_id UUID NOT NULL UNIQUE,
+    username VARCHAR(100),
+    display_name VARCHAR(255),
     role VARCHAR(30) DEFAULT 'user' NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
