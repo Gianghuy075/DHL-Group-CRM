@@ -5,6 +5,7 @@ export const PAGE_TITLES = {
   kiosks: 'Kiosk',
   'kiosk-detail': 'Chi tiết Kiosk',
   payments: 'Thanh toán',
+  'facebook-tasks': 'Nhiệm vụ Chéo Facebook',
   categories: 'Danh mục',
   'business-types': 'Loại hình KD',
   logs: 'Lịch sử thay đổi',
@@ -24,11 +25,17 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Quản lý',
+    label: 'Dịch vụ & Tương tác',
     items: [
+      { route: 'facebook-tasks', label: 'Nhiệm vụ Chéo FB', icon: '⚡' },
       { route: 'customers', label: 'Khách hàng', icon: '👥' },
       { route: 'kiosks', label: 'Kiosk', icon: '🏪' },
       { route: 'payments', label: 'Thanh toán', icon: '💰' },
+    ],
+  },
+  {
+    label: 'Quản lý danh mục',
+    items: [
       { route: 'categories', label: 'Danh mục', icon: '🏷️' },
       { route: 'business-types', label: 'Loại hình KD', icon: '🧾' },
       { route: 'registration-requests', label: 'Duyệt đăng ký', icon: '✅' },

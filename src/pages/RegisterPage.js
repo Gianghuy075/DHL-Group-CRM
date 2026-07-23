@@ -1,4 +1,7 @@
 import { PageHeader } from '../components/PageHeader.js';
+import { PayOSPaymentModal } from '../components/PayOSPaymentModal.js';
+import { FacebookVerificationModal } from '../components/FacebookVerificationModal.js';
+import { FacebookApiService } from '../services/FacebookApiService.js';
 import { BusinessTypeService } from '../services/BusinessTypeService.js';
 import { CategoryService } from '../services/CategoryService.js';
 import { RegistrationService } from '../services/RegistrationService.js';
@@ -12,21 +15,14 @@ const STEPS = [
   'Thanh toán',
 ];
 
-const VIETQR_CONFIG = {
-  bankId: 'MB',
-  bankName: 'MB Bank',
-  accountNo: '088812102004',
-  accountName: 'NGUYEN THANH HAN',
-  accountNameDisplay: 'Nguyễn Thanh Hân',
-  template: 'compact2',
-};
-
 const state = {
   currentStep: 0,
   categories: [],
   businessTypes: [],
   selectedBusinessType: null,
   preview: null,
+  facebookVerified: false,
+  facebookVerificationData: null,
 };
 
 export function RegisterPage() {
@@ -63,14 +59,28 @@ export function RegisterPage() {
           </div>
           <div class="form-row">
             <label class="form-group">
-              <span>Facebook ID <small class="field-optional">Không bắt buộc</small></span>
-              <input class="form-control" id="register-facebook-id" type="text" inputmode="numeric" autocomplete="off" />
+              <span>Facebook ID <small class="field-optional">Bắt buộc xác thực</small></span>
+              <input class="form-control" id="register-facebook-id" type="text" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 1000888123" />
             </label>
             <label class="form-group">
-              <span>Link Facebook</span>
-              <input class="form-control" id="register-facebook-link" type="url" inputmode="url" autocomplete="url" />
+              <span>Link Facebook Trang Cá Nhân *</span>
+              <input class="form-control" id="register-facebook-link" type="url" inputmode="url" autocomplete="url" placeholder="https://www.facebook.com/..." required />
             </label>
           </div>
+
+          <div class="fb-verify-step-box" id="register-fb-verify-box">
+            <div class="fb-verify-status-text">
+              <span class="status-icon">🛡️</span>
+              <div>
+                <strong>Xác thực Điều kiện Facebook qua Graph API v19.0</strong>
+                <div class="muted-text">Bắt buộc: Chế độ Công khai / Người nổi tiếng & có tối thiểu 100 bạn bè/followers.</div>
+              </div>
+            </div>
+            <button class="btn-secondary" type="button" id="register-verify-fb-btn">
+              Kiểm tra Graph API v19.0 ➔
+            </button>
+          </div>
+
           <label class="form-group">
             <span>Địa chỉ</span>
             <textarea class="form-control" id="register-address" rows="2" autocomplete="street-address"></textarea>
@@ -128,14 +138,17 @@ export function RegisterPage() {
             ${summaryRow('Giảm giá', '<span id="register-discount-amount">0 đ</span>', true)}
             ${summaryRow('Tổng tiền', '<span id="register-total-amount">—</span>', true)}
           </div>
-          ${renderVietQrPaymentCard()}
+          <div class="payos-notice-box">
+            <span>💳</span>
+            <div>Bấm <strong>Thanh toán PayOS & Kích hoạt</strong> để mở Dialog quét mã QR VietQR PayOS hoặc dùng Ví Ảo web để kích hoạt tự động.</div>
+          </div>
         </div>
 
         <div class="registration-actions">
           <button class="btn-secondary hidden" id="register-prev-button" type="button">Quay lại</button>
           <button class="btn-primary" id="register-next-button" type="button">Tiếp tục</button>
           <button class="btn-secondary hidden" id="register-cancel-button" type="button">Hủy</button>
-          <button class="btn-primary hidden" id="register-submit-button" type="submit">Tôi đã thanh toán</button>
+          <button class="btn-primary hidden" id="register-submit-button" type="submit">Thanh toán PayOS & Kích hoạt ➔</button>
         </div>
       </form>
       <div id="registration-success" class="registration-success hidden"></div>
@@ -181,7 +194,46 @@ function bindRegistrationEvents() {
 
   document.getElementById('register-months')?.addEventListener('input', updatePreview);
   document.getElementById('register-discount')?.addEventListener('input', updatePreview);
-  document.getElementById('register-facebook-name')?.addEventListener('input', updateVietQrPayment);
+
+  // Auto detect Facebook ID in real-time when user types or pastes profile link
+  document.getElementById('register-facebook-link')?.addEventListener('input', (e) => {
+    const val = e.target.value;
+    const extractedId = FacebookApiService.extractFacebookId(val);
+    const idInput = document.getElementById('register-facebook-id');
+    if (extractedId && idInput) {
+      idInput.value = extractedId;
+    }
+  });
+
+  document.getElementById('register-verify-fb-btn')?.addEventListener('click', () => {
+    const url = readValue('register-facebook-link') || readValue('register-facebook-name');
+    const fbid = readValue('register-facebook-id');
+
+    FacebookVerificationModal.open({
+      currentFacebookUrl: url,
+      currentFacebookId: fbid,
+      onVerified: (result) => {
+        state.facebookVerified = true;
+        state.facebookVerificationData = result;
+
+        const box = document.getElementById('register-fb-verify-box');
+        if (box) {
+          box.innerHTML = `
+            <div class="fb-verified-success-badge">
+              <span class="check-icon">✅</span>
+              <div>
+                <strong>Đã Xác Thực Facebook Đạt Chuẩn Graph API</strong>
+                <div class="sub-text">Cá nhân: ${escapeHtml(result.name)} (ID: ${escapeHtml(result.facebookId)}) · ${result.friendCount + result.followerCount} Bạn bè/Followers · Công khai</div>
+              </div>
+            </div>
+          `;
+        }
+
+        const fbidInput = document.getElementById('register-facebook-id');
+        if (fbidInput && !fbidInput.value) fbidInput.value = result.facebookId;
+      },
+    });
+  });
 
   document.getElementById('public-registration-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -246,24 +298,46 @@ async function loadBusinessTypes(categoryId) {
 }
 
 async function submitRegistration() {
-  const submitButton = document.getElementById('register-submit-button');
   clearFormError();
-  setSubmitting(submitButton, true);
+  const customerPayload = readCustomerPayload();
+  const businessTypeId = readValue('register-business-type');
+  const months = readNumber('register-months');
+  const discount = readNumber('register-discount');
+  const discountReason = readValue('register-discount-reason');
 
-  try {
-    const { data } = await RegistrationService.submit({
-      customer: readCustomerPayload(),
-      businessTypeId: readValue('register-business-type'),
-      months: readNumber('register-months'),
-      discount: readNumber('register-discount'),
-      discountReason: readValue('register-discount-reason'),
-    });
-    renderSuccess(data);
-  } catch (error) {
-    showFormError(error?.message || 'Không thể gửi đăng ký vào Supabase.');
-  } finally {
-    setSubmitting(submitButton, false);
+  if (!state.preview) {
+    showFormError('Chưa tính được giá đăng ký.');
+    return;
   }
+
+  // Launch PayOS 3-step Payment Modal
+  PayOSPaymentModal.open({
+    title: `Đăng ký Kiosk - ${customerPayload.facebook_name}`,
+    amount: state.preview.totalAmount,
+    description: `DK ${customerPayload.facebook_name}`.slice(0, 25),
+    customerName: customerPayload.facebook_name,
+    kioskName: customerPayload.facebook_name,
+    months: state.preview.months,
+    onSuccess: async () => {
+      const submitButton = document.getElementById('register-submit-button');
+      setSubmitting(submitButton, true);
+
+      try {
+        const { data } = await RegistrationService.submit({
+          customer: customerPayload,
+          businessTypeId,
+          months,
+          discount,
+          discountReason,
+        });
+        renderSuccess(data);
+      } catch (error) {
+        showFormError(error?.message || 'Không thể gửi đăng ký vào Supabase.');
+      } finally {
+        setSubmitting(submitButton, false);
+      }
+    },
+  });
 }
 
 function updateSelectedBusinessType() {
@@ -293,7 +367,6 @@ function updatePreview() {
     setText('register-subtotal', formatCurrency(state.preview.subtotal));
     setText('register-discount-amount', formatCurrency(state.preview.discount));
     setText('register-total-amount', formatCurrency(state.preview.totalAmount));
-    updateVietQrPayment();
   } catch {
     state.preview = null;
     setText('register-step-subtotal', '—');
@@ -306,7 +379,6 @@ function updatePreview() {
     setText('register-subtotal', '—');
     setText('register-discount-amount', '—');
     setText('register-total-amount', '—');
-    clearVietQrPayment();
   }
 }
 
@@ -321,6 +393,11 @@ function validateStep(step) {
 
     if (!readValue('register-phone')) {
       showFormError('Số điện thoại là bắt buộc.');
+      return false;
+    }
+
+    if (!state.facebookVerified) {
+      showFormError('Vui lòng bấm nút "Kiểm tra Graph API v19.0" để xác thực tài khoản Facebook công khai (>= 100 bạn bè) trước khi tiếp tục.');
       return false;
     }
 
@@ -439,95 +516,10 @@ function renderSuccess(data) {
     <div class="registration-summary">
       ${summaryRow('Khách hàng', escapeHtml(data.customer?.facebook_name || '—'), true)}
       ${summaryRow('Kiosk', escapeHtml(data.kiosk?.facebook_name || '—'), true)}
-      ${summaryRow('Trạng thái', '<span class="badge badge-pending">Chờ Admin xác nhận</span>', true)}
+      ${summaryRow('Trạng thái', '<span class="badge badge-completed">Đã xác nhận PayOS</span>', true)}
       ${summaryRow('Tổng tiền', formatCurrency(data.preview?.totalAmount || 0), true)}
     </div>
   `;
-}
-
-function renderVietQrPaymentCard() {
-  return `
-    <section class="vietqr-payment-card hidden" id="register-vietqr-card">
-      <div class="vietqr-payment-header">
-        <h3>Chuyển khoản VietQR</h3>
-        <span class="badge badge-active">${escapeHtml(VIETQR_CONFIG.bankName)}</span>
-      </div>
-      <div class="vietqr-payment-grid">
-        <div class="vietqr-image-frame">
-          <img id="register-vietqr-image" alt="Mã QR chuyển khoản đăng ký kiosk" loading="eager" />
-        </div>
-        <div class="settings-list">
-          ${summaryRow('Ngân hàng', VIETQR_CONFIG.bankName)}
-          ${summaryRow('Số tài khoản', VIETQR_CONFIG.accountNo)}
-          ${summaryRow('Người thụ hưởng', VIETQR_CONFIG.accountNameDisplay)}
-          ${summaryRow('Số tiền', '<span id="register-vietqr-amount">—</span>', true)}
-          ${summaryRow('Nội dung CK', '<span id="register-vietqr-content">—</span>', true)}
-          <a id="register-vietqr-link" class="btn-secondary link-button" href="#" target="_blank" rel="noreferrer">Mở mã QR</a>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function updateVietQrPayment() {
-  const card = document.getElementById('register-vietqr-card');
-  const image = document.getElementById('register-vietqr-image');
-  const link = document.getElementById('register-vietqr-link');
-  const amount = document.getElementById('register-vietqr-amount');
-  const content = document.getElementById('register-vietqr-content');
-  const payment = buildVietQrPayment(state.preview, readValue('register-facebook-name'));
-
-  if (!card || !image || !link || !amount || !content) return;
-
-  if (!payment) {
-    clearVietQrPayment();
-    return;
-  }
-
-  image.src = payment.qrUrl;
-  link.href = payment.qrUrl;
-  amount.textContent = formatCurrency(payment.amount);
-  content.textContent = payment.transferContent;
-  card.classList.remove('hidden');
-}
-
-function clearVietQrPayment() {
-  const card = document.getElementById('register-vietqr-card');
-  const image = document.getElementById('register-vietqr-image');
-  const link = document.getElementById('register-vietqr-link');
-
-  card?.classList.add('hidden');
-  if (image) image.removeAttribute('src');
-  if (link) link.href = '#';
-  setText('register-vietqr-amount', '—');
-  setText('register-vietqr-content', '—');
-}
-
-function buildVietQrPayment(preview, kioskName) {
-  const amount = Math.round(Number(preview?.totalAmount || 0));
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-
-  const transferContent = buildTransferContent(kioskName);
-  return {
-    amount,
-    transferContent,
-    qrUrl: buildVietQrUrl(amount, transferContent),
-  };
-}
-
-function buildVietQrUrl(amount, transferContent) {
-  const params = [
-    `amount=${encodeURIComponent(String(amount))}`,
-    `addInfo=${encodeURIComponent(transferContent)}`,
-    `accountName=${encodeURIComponent(VIETQR_CONFIG.accountName)}`,
-  ].join('&');
-
-  return `https://img.vietqr.io/image/${VIETQR_CONFIG.bankId}-${VIETQR_CONFIG.accountNo}-${VIETQR_CONFIG.template}.png?${params}`;
-}
-
-function buildTransferContent(kioskName) {
-  const name = String(kioskName || 'Khách hàng').replace(/\s+/g, ' ').trim();
-  return `${name} chuyển tiền đăng ký kiosk`;
 }
 
 function summaryRow(label, value, isHtml = false) {

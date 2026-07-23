@@ -1,9 +1,12 @@
 import { EmptyState } from '../components/EmptyState.js';
 import { openCustomerForm } from '../components/CustomerForm.js';
 import { PageHeader } from '../components/PageHeader.js';
+import { WalletCard } from '../components/WalletCard.js';
+import { FacebookVerificationModal } from '../components/FacebookVerificationModal.js';
 import { FACEBOOK_GROUP_MEMBER_BASE_URL, FACEBOOK_PROFILE_BASE_URL } from '../constants/facebook.js';
 import { CustomerService } from '../services/CustomerService.js';
 import { KioskService } from '../services/KioskService.js';
+import { WalletService } from '../services/WalletService.js';
 import { formatCurrency } from '../utils/currency.js';
 import { formatDate } from '../utils/date.js';
 import { escapeHtml } from '../utils/html.js';
@@ -15,7 +18,7 @@ export function CustomerDetailPage() {
   return `
     ${PageHeader({
       title: 'Chi tiết khách hàng',
-      description: 'Thông tin chi tiết khách hàng và các kiosk liên quan.',
+      description: 'Thông tin chi tiết khách hàng, ví ảo và các kiosk liên quan.',
       actions: '<a class="btn-secondary link-button" href="#/customers">Quay lại</a>',
     })}
     <div id="customer-detail-content">
@@ -36,12 +39,13 @@ CustomerDetailPage.afterRender = async function afterRenderCustomerDetail({ para
   renderCustomerDetailState('Đang tải khách hàng', 'Đang đọc dữ liệu từ Supabase.');
 
   try {
-    const [{ data: customer }, { data: kiosks }] = await Promise.all([
+    const [{ data: customer }, { data: kiosks }, walletInfo] = await Promise.all([
       CustomerService.getById(id),
       KioskService.listByCustomer(id),
+      WalletService.getWalletInfo(id),
     ]);
 
-    renderCustomerDetail(customer, kiosks || []);
+    renderCustomerDetail(customer, kiosks || [], walletInfo);
   } catch (error) {
     renderCustomerDetailState(
       'Không thể tải khách hàng',
@@ -50,11 +54,15 @@ CustomerDetailPage.afterRender = async function afterRenderCustomerDetail({ para
   }
 };
 
-function renderCustomerDetail(customer, kiosks) {
+function renderCustomerDetail(customer, kiosks, walletInfo) {
   const content = document.getElementById('customer-detail-content');
   if (!content) return;
 
   content.innerHTML = `
+    <div id="customer-wallet-card-outlet">
+      ${WalletCard({ customer, walletInfo })}
+    </div>
+
     <div class="admin-grid">
       <section class="admin-card">
         <h3>Thông tin Facebook</h3>
@@ -63,7 +71,11 @@ function renderCustomerDetail(customer, kiosks) {
           ${detailRow('Facebook ID', customer.facebook_id)}
           ${detailRow('Link Facebook', customerFacebookLink(customer), true)}
           ${detailRow('Link nhóm Facebook', customerGroupLink(customer), true)}
-          ${detailRow('Trạng thái', renderStatusBadge(customer.status), false, true)}
+          ${detailRow('Xác thực FB Graph API', renderFbVerificationBadge(customer), false, true)}
+          ${detailRow('Trạng thái Kiosk', renderStatusBadge(customer.status), false, true)}
+        </div>
+        <div class="card-action-bar">
+          <button class="btn-secondary compact" type="button" data-verify-fb-btn>🛡️ Xác thực qua Graph API</button>
         </div>
       </section>
       <section class="admin-card">
@@ -92,10 +104,29 @@ function renderCustomerDetail(customer, kiosks) {
   `;
 
   currentCustomer = customer;
+
+  const walletOutlet = document.getElementById('customer-wallet-card-outlet');
+  if (walletOutlet) {
+    WalletCard.bindEvents(walletOutlet, {
+      customerId: customer.id,
+      customerName: customer.facebook_name,
+      onUpdated: () => CustomerDetailPage.afterRender({ params: new URLSearchParams({ id: customer.id }) }),
+    });
+  }
+
   document.querySelector('[data-customer-detail-edit]')?.addEventListener('click', () => {
     openCustomerForm({
       customer: currentCustomer,
       onSaved: () => CustomerDetailPage.afterRender({ params: new URLSearchParams({ id: customer.id }) }),
+    });
+  });
+
+  document.querySelector('[data-verify-fb-btn]')?.addEventListener('click', () => {
+    FacebookVerificationModal.open({
+      customerId: currentCustomer.id,
+      currentFacebookUrl: customerFacebookLink(currentCustomer),
+      currentFacebookId: currentCustomer.facebook_id,
+      onVerified: () => CustomerDetailPage.afterRender({ params: new URLSearchParams({ id: customer.id }) }),
     });
   });
 }
@@ -174,6 +205,14 @@ function renderStatusBadge(status) {
     expired: 'Hết hạn',
   };
   return `<span class="badge badge-${safeClass}">${labels[normalized] || escapeHtml(status || 'Không rõ')}</span>`;
+}
+
+function renderFbVerificationBadge(customer) {
+  if (customer.facebook_verified) {
+    const totalReach = Number(customer.friend_count || 0) + Number(customer.follower_count || 0);
+    return `<span class="badge badge-completed">✅ Đã xác thực (Công khai · ${totalReach} bạn)</span>`;
+  }
+  return `<span class="badge badge-pending">⚠️ Chưa xác thực FB Graph API</span>`;
 }
 
 function renderCustomerDetailState(title, message) {

@@ -1793,3 +1793,728 @@ textarea {
     flex-basis: 100%;
   }
 }
+
+/* ==========================================================================
+   PayOS & Virtual Wallet System Styles
+   ========================================================================== */
+.payos-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payos-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.payos-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.payos-step span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.payos-step.active {
+  color: #fbbf24;
+}
+
+.payos-step.active span {
+  color: #0f172a;
+  background: #fbbf24;
+}
+
+.payos-step.completed {
+  color: #4ade80;
+}
+
+.payos-step.completed span {
+  color: #0f172a;
+  background: #4ade80;
+}
+
+.payos-step-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 10px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.payos-step-line.active {
+  background: #fbbf24;
+}
+
+.payos-summary-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.payos-wallet-option {
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+}
+
+.payos-wallet-option.available {
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.wallet-option-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.wallet-icon {
+  font-size: 24px;
+}
+
+.payos-qr-wrapper {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.payos-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.payos-qr-image {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.payos-qr-badge {
+  margin-top: 10px;
+  padding: 4px 10px;
+  color: #0369a1;
+  background: #e0f2fe;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.payos-transfer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-val-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-copy {
+  padding: 3px 8px;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-copy:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.code-text {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+}
+
+.payos-polling-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px dashed rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-result-box {
+  padding: 24px;
+  text-align: center;
+  border-radius: 14px;
+}
+
+.status-result-box.success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-result-box.warning {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.status-icon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.status-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.status-desc {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Virtual Wallet Component */
+.wallet-card {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.wallet-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.wallet-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.wallet-balances-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.balance-label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.balance-value {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.text-gold {
+  color: #fbbf24;
+}
+
+.text-bonus {
+  color: #a855f7;
+}
+
+.topup-tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.topup-tier-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.topup-tier-card:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  transform: translateY(-2px);
+}
+
+.topup-tier-card.selected {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: #fbbf24;
+}
+
+.tier-ribbon {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  padding: 2px 8px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.tier-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.tier-badge {
+  display: inline-block;
+  color: #c084fc;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tier-total {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.topup-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-dot.green { color: #4ade80; }
+.status-dot.yellow { color: #facc15; }
+.status-dot.red { color: #f87171; }
+
+/* ==========================================================================
+   Facebook Cross-Interaction Tasks Styles
+   ========================================================================== */
+.tasks-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tasks-wallet-mini-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 14px;
+}
+
+.mini-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mini-card-icon {
+  font-size: 24px;
+}
+
+.mini-card-title {
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.mini-card-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.task-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.task-tab {
+  padding: 10px 18px;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-tab:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.task-tab.active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.marketplace-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  color: #ffffff;
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.task-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.task-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.task-reward-tag {
+  padding: 4px 10px;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.task-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.task-url-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.url-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.task-url-link {
+  color: #38bdf8;
+  font-size: 12px;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.task-url-link:hover {
+  text-decoration: underline;
+}
+
+.task-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #fbbf24;
+  border-radius: 3px;
+}
+
+.task-meta-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.task-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-task-card {
+  max-width: 720px;
+}
+
+.task-type-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.task-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-type-option input {
+  display: none;
+}
+
+.task-type-option.selected {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.create-task-cost-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.wallet-insufficient-notice {
+  padding: 10px 12px;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Facebook Profile Verification Styles */
+.fb-verify-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fb-verify-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+}
+
+.fb-logo-icon {
+  font-size: 28px;
+}
+
+.fb-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.criteria-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.criteria-item .check-icon {
+  color: #4ade80;
+  font-weight: 800;
+}
+
+.criteria-item .sub-text {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.fb-verify-step-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.fb-verify-status-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.fb-verified-success-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 10px;
+  width: 100%;
+}
+
+.fb-verified-mini-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.fb-verified-mini-banner.success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.fb-verified-mini-banner.warning {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  color: #facc15;
+}
+
+.card-action-bar {
+  margin-top: 12px;
+}
+
+
+

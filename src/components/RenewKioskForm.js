@@ -1,5 +1,6 @@
 import { Modal } from './Modal.js';
 import { Toast } from './Toast.js';
+import { PayOSPaymentModal } from './PayOSPaymentModal.js';
 import { KioskService } from '../services/KioskService.js';
 import { PaymentService } from '../services/PaymentService.js';
 import { formatCurrency } from '../utils/currency.js';
@@ -54,20 +55,27 @@ function bindRenewForm(onSaved) {
       return;
     }
 
-    const saveButton = document.getElementById('renew-save-button');
-    setSaving(saveButton, true);
+    const payload = readRenewPayload();
+    const preview = PaymentService.calculateRenewalPreview(currentKiosk, {
+      months: payload.months,
+      discount: payload.discount,
+    });
 
-    try {
-      const payload = readRenewPayload();
-      await PaymentService.renewKiosk(payload);
-      Modal.close();
-      Toast.show('Đã gia hạn kiosk.');
-      await onSaved?.();
-    } catch (error) {
-      showRenewError(error?.message || 'Không thể gia hạn kiosk.');
-    } finally {
-      setSaving(saveButton, false);
-    }
+    // Open PayOS 3-Step Payment Modal
+    PayOSPaymentModal.open({
+      title: `Gia hạn Kiosk - ${currentKiosk.facebook_name}`,
+      amount: preview.totalAmount,
+      description: `GH ${currentKiosk.facebook_name}`.slice(0, 25),
+      customerId: currentKiosk.customer_id,
+      customerName: currentKiosk.customers?.facebook_name || currentKiosk.facebook_name,
+      kioskName: currentKiosk.facebook_name,
+      months: preview.months,
+      onSuccess: async () => {
+        await PaymentService.renewKiosk(payload);
+        Toast.show('Đã gia hạn Kiosk thành công!');
+        await onSaved?.();
+      },
+    });
   });
 }
 

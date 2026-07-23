@@ -12,6 +12,11 @@ const CUSTOMER_MUTABLE_FIELDS = [
   'address',
   'status',
   'note',
+  'facebook_verified',
+  'facebook_verified_at',
+  'friend_count',
+  'follower_count',
+  'is_public_profile',
 ];
 
 export const CustomerService = {
@@ -73,6 +78,25 @@ export const CustomerService = {
       supabase
         .from('customers')
         .update(pickCustomerPayload(customer))
+        .eq('id', id)
+        .select()
+        .single(),
+    );
+  },
+
+  async updateFacebookVerification(id, { verified = true, friendCount = 0, followerCount = 0, isPublic = true, facebookId = '' }) {
+    const supabase = requireSupabaseClient();
+    return runQuery(
+      supabase
+        .from('customers')
+        .update({
+          facebook_verified: verified,
+          facebook_verified_at: new Date().toISOString(),
+          friend_count: friendCount,
+          follower_count: followerCount,
+          is_public_profile: isPublic,
+          facebook_id: facebookId || undefined,
+        })
         .eq('id', id)
         .select()
         .single(),

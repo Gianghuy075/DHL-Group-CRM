@@ -1,5 +1,6 @@
 import { EmptyState } from '../components/EmptyState.js';
 import { Modal } from '../components/Modal.js';
+import { PayOSPaymentModal } from '../components/PayOSPaymentModal.js';
 import { PageHeader } from '../components/PageHeader.js';
 import { StatCard } from '../components/StatCard.js';
 import { Toast } from '../components/Toast.js';
@@ -324,27 +325,19 @@ function renderApprovalAction(payment) {
 }
 
 function openPaymentApproval(payment) {
-  Modal.open({
-    title: 'Xác nhận thanh toán',
-    body: `
-      <div class="approval-message">
-        <p>Xác nhận đã nhận chuyển khoản cho Kiosk <strong>${escapeHtml(payment.kiosks?.facebook_name || '—')}</strong>?</p>
-        <div class="registration-summary">
-          <div class="setting-item"><span class="setting-name">Khách hàng</span><span class="setting-value">${escapeHtml(payment.customers?.facebook_name || '—')}</span></div>
-          <div class="setting-item"><span class="setting-name">Số tiền</span><span class="setting-value">${formatCurrency(payment.total_amount || 0)}</span></div>
-        </div>
-        <p class="muted-text">Thao tác này sẽ hoàn thành thanh toán và kích hoạt dữ liệu liên quan theo logic database.</p>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" type="button" data-approval-cancel>Đóng</button>
-        <button class="btn-primary" type="button" data-approval-confirm>Xác nhận thanh toán</button>
-      </div>
-    `,
-  });
-
-  document.querySelector('[data-approval-cancel]')?.addEventListener('click', Modal.close);
-  document.querySelector('[data-approval-confirm]')?.addEventListener('click', (event) => {
-    confirmPayment(payment.id, event.currentTarget);
+  PayOSPaymentModal.open({
+    title: `Xác thực Thanh toán - ${payment.kiosks?.facebook_name || 'Kiosk'}`,
+    amount: Number(payment.total_amount || 0),
+    description: `DHL ${payment.id?.slice(0, 8)}`,
+    customerId: payment.customer_id,
+    customerName: payment.customers?.facebook_name || '',
+    kioskName: payment.kiosks?.facebook_name || '',
+    months: payment.months,
+    onSuccess: async () => {
+      await PaymentService.confirm(payment.id);
+      Toast.show('Đã xác nhận thanh toán thành công qua PayOS / Ví Ảo!');
+      await loadPayments();
+    },
   });
 }
 
