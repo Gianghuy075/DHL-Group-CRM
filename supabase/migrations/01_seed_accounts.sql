@@ -110,7 +110,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 -- PHẦN 2: Dữ liệu user_roles (Phân quyền)
 -- ============================================================================
-INSERT INTO public.user_roles (user_id, username, display_name, role, is_active) VALUES
+INSERT INTO "DHL-Group-CRM".user_roles (user_id, username, display_name, role, is_active) VALUES
 ('a0000000-0000-0000-0000-000000000001', 'admin', 'Admin DHL', 'admin', TRUE),
 ('a0000000-0000-0000-0000-000000000002', 'user1', 'Người dùng 1', 'user', TRUE),
 ('a0000000-0000-0000-0000-000000000003', 'user2', 'Người dùng 2 (Dịch vụ)', 'user', TRUE)
@@ -120,13 +120,13 @@ ON CONFLICT DO NOTHING;
 -- ============================================================================
 -- PHẦN 3: Dữ liệu Danh mục & Loại hình kinh doanh
 -- ============================================================================
-INSERT INTO public.categories (id, name, description, is_active, sort_order) VALUES
+INSERT INTO "DHL-Group-CRM".categories (id, name, description, is_active, sort_order) VALUES
 ('c0000000-0000-0000-0000-000000000001', 'Thời trang', 'Thời trang, quần áo, giày dép', TRUE, 1),
 ('c0000000-0000-0000-0000-000000000002', 'Ẩm thực', 'Đồ ăn, thức uống, nhà hàng', TRUE, 2),
 ('c0000000-0000-0000-0000-000000000003', 'Làm đẹp', 'Mỹ phẩm, spa, chăm sóc sắc đẹp', TRUE, 3)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.business_types (id, category_id, name, price_per_month, description, is_active, sort_order) VALUES
+INSERT INTO "DHL-Group-CRM".business_types (id, category_id, name, price_per_month, description, is_active, sort_order) VALUES
 ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Thời trang Nam', 500000, 'Kiosk thời trang nam', TRUE, 1),
 ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'Thời trang Nữ', 600000, 'Kiosk thời trang nữ', TRUE, 2),
 ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000002', 'Trà sữa & Đồ uống', 450000, 'Kiosk trà sữa, nước ép', TRUE, 3),
@@ -139,14 +139,14 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 -- User1: Khách hàng mới, chưa có dịch vụ
-INSERT INTO public.customers (id, facebook_name, facebook_id, phone, address, status, note, wallet_balance, bonus_balance) VALUES
+INSERT INTO "DHL-Group-CRM".customers (id, facebook_name, facebook_id, phone, address, status, note, wallet_balance, bonus_balance) VALUES
 ('a0000000-0000-0000-0000-000000000002',
  'Nguyen Van User1', '100088812345', '0901234567', 'Hà Nội',
  'potential', 'Tài khoản user1 demo', 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- User2: Khách hàng đã có dịch vụ, có tiền ví, đã xác thực FB
-INSERT INTO public.customers (id, facebook_name, facebook_id, facebook_link, phone, address, status, note,
+INSERT INTO "DHL-Group-CRM".customers (id, facebook_name, facebook_id, facebook_link, phone, address, status, note,
     total_paid, total_kiosks, wallet_balance, bonus_balance,
     facebook_verified, facebook_verified_at, friend_count, follower_count, is_public_profile)
 VALUES
@@ -161,18 +161,18 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 -- PHẦN 5: Dữ liệu Kiosk cho User2
 -- ============================================================================
-INSERT INTO public.kiosks (id, customer_id, facebook_name, facebook_id, facebook_link, category_id, business_type_id,
+INSERT INTO "DHL-Group-CRM".kiosks (id, customer_id, facebook_name, facebook_id, facebook_link, category_id, business_type_id,
     start_date, end_date, status, auto_approve, total_paid)
 VALUES
 -- Kiosk 1: Đang hoạt động
-('k0000000-0000-0000-0000-000000000001',
+('d0000000-0000-0000-0000-000000000001',
  'a0000000-0000-0000-0000-000000000003',
  'Shop User2 - Thời Trang', '100099912345', 'https://www.facebook.com/user2.demo',
  'c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001',
  CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '60 days',
  'active', FALSE, 500000),
 -- Kiosk 2: Đang hoạt động
-('k0000000-0000-0000-0000-000000000002',
+('d0000000-0000-0000-0000-000000000002',
  'a0000000-0000-0000-0000-000000000003',
  'Shop User2 - Trà Sữa', '100099912345', 'https://www.facebook.com/user2.demo',
  'c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000003',
@@ -184,16 +184,16 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 -- PHẦN 6: Dữ liệu Thanh toán cho User2
 -- ============================================================================
-INSERT INTO public.payments (id, customer_id, kiosk_id, start_date, end_date, months, price_per_month,
+INSERT INTO "DHL-Group-CRM".payments (id, customer_id, kiosk_id, start_date, end_date, months, price_per_month,
     discount, discount_reason, total_amount, payment_method, payment_status, confirmed_at)
 VALUES
-('p0000000-0000-0000-0000-000000000001',
- 'a0000000-0000-0000-0000-000000000003', 'k0000000-0000-0000-0000-000000000001',
+('e0000000-0000-0000-0000-000000000001',
+ 'a0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001',
  CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '60 days',
  3, 500000, 300000, 'Ưu đãi khách hàng mới', 1200000,
  'transfer', 'completed', NOW()),
-('p0000000-0000-0000-0000-000000000002',
- 'a0000000-0000-0000-0000-000000000003', 'k0000000-0000-0000-0000-000000000002',
+('e0000000-0000-0000-0000-000000000002',
+ 'a0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000002',
  CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '75 days',
  2, 450000, 0, NULL, 900000,
  'transfer', 'completed', NOW())
@@ -203,7 +203,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 -- PHẦN 7: Dữ liệu Ví Ảo cho User2
 -- ============================================================================
-INSERT INTO public.wallet_transactions (customer_id, transaction_type, amount, bonus_amount, status, description) VALUES
+INSERT INTO "DHL-Group-CRM".wallet_transactions (customer_id, transaction_type, amount, bonus_amount, status, description) VALUES
 ('a0000000-0000-0000-0000-000000000003', 'deposit', 1000000, 150000, 'completed', 'Nạp ví qua PayOS - Demo'),
 ('a0000000-0000-0000-0000-000000000003', 'spending', -250000, 0, 'completed', 'Đăng nhiệm vụ Like chéo (x50)');
 
@@ -211,11 +211,11 @@ INSERT INTO public.wallet_transactions (customer_id, transaction_type, amount, b
 -- ============================================================================
 -- PHẦN 8: Dữ liệu Nhiệm vụ Chéo Facebook cho User2
 -- ============================================================================
-INSERT INTO public.facebook_tasks (id, creator_id, task_type, post_url, facebook_target_id,
+INSERT INTO "DHL-Group-CRM".facebook_tasks (id, creator_id, task_type, post_url, facebook_target_id,
     target_quantity, completed_quantity, unit_price, total_cost, status, note)
 VALUES
 -- Nhiệm vụ 1: Like chéo - Đang chạy
-('t0000000-0000-0000-0000-000000000001',
+('f0000000-0000-0000-0000-000000000001',
  'a0000000-0000-0000-0000-000000000003',
  'like_post',
  'https://www.facebook.com/user2.demo/posts/123456789',
@@ -223,7 +223,7 @@ VALUES
  50, 12, 500, 25000,
  'active', 'Like bài viết mới nhất của shop'),
 -- Nhiệm vụ 2: Share chéo - Đang chạy
-('t0000000-0000-0000-0000-000000000002',
+('f0000000-0000-0000-0000-000000000002',
  'a0000000-0000-0000-0000-000000000003',
  'share_post',
  'https://www.facebook.com/user2.demo/posts/987654321',
@@ -231,7 +231,7 @@ VALUES
  30, 5, 1500, 45000,
  'active', 'Share bài khuyến mãi cuối tuần'),
 -- Nhiệm vụ 3: Follow chéo - Đã hoàn thành
-('t0000000-0000-0000-0000-000000000003',
+('f0000000-0000-0000-0000-000000000003',
  'a0000000-0000-0000-0000-000000000003',
  'follow_profile',
  'https://www.facebook.com/user2.demo',

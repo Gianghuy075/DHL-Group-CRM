@@ -20,7 +20,9 @@ export function getSupabaseClient() {
 
   if (!client) {
     const config = readSupabaseConfig();
-    client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+    client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      db: { schema: 'DHL-Group-CRM' },
+    });
   }
 
   return client;

@@ -20,7 +20,10 @@ Deno.serve(async (request: Request) => {
     const token = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
     if (!token) return respond(401, 'Vui lòng đăng nhập.');
 
-    const admin = createClient(url, secretKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const admin = createClient(url, secretKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      db: { schema: 'DHL-Group-CRM' },
+    });
     const { data: authData, error: authError } = await admin.auth.getUser(token);
     if (authError || !authData.user) return respond(401, 'Phiên đăng nhập không hợp lệ.');
 

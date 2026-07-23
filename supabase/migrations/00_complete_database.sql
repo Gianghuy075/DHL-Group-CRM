@@ -1,12 +1,16 @@
 -- ============================================================================
 -- DHL-GROUP-CRM KIOSK MANAGEMENT - COMPLETE DATABASE SCHEMA
 -- Supabase PostgreSQL - Chạy toàn bộ file này 1 lần trong SQL Editor
+-- Toàn bộ object nằm trong schema "DHL-Group-CRM" (KHÔNG dùng public).
 -- ============================================================================
+
+-- Tạo schema (tên có dấu gạch + chữ hoa nên BẮT BUỘC để trong dấu nháy kép)
+CREATE SCHEMA IF NOT EXISTS "DHL-Group-CRM";
 
 -- ==========================================================================
 -- 1. BẢNG: categories (Danh mục)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.categories (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".categories (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -19,9 +23,9 @@ CREATE TABLE IF NOT EXISTS public.categories (
 -- ==========================================================================
 -- 2. BẢNG: business_types (Loại hình kinh doanh)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.business_types (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".business_types (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+    category_id UUID REFERENCES "DHL-Group-CRM".categories(id) ON DELETE SET NULL,
     name VARCHAR(255) NOT NULL,
     price_per_month NUMERIC(15, 2) DEFAULT 0 NOT NULL,
     description TEXT,
@@ -31,12 +35,12 @@ CREATE TABLE IF NOT EXISTS public.business_types (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_business_types_category ON public.business_types(category_id);
+CREATE INDEX IF NOT EXISTS idx_business_types_category ON "DHL-Group-CRM".business_types(category_id);
 
 -- ==========================================================================
 -- 3. BẢNG: customers (Khách hàng)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.customers (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".customers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     facebook_name VARCHAR(255),
     facebook_id VARCHAR(100),
@@ -62,21 +66,21 @@ CREATE TABLE IF NOT EXISTS public.customers (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_customers_status ON public.customers(status);
-CREATE INDEX IF NOT EXISTS idx_customers_fb_verified ON public.customers(facebook_verified);
+CREATE INDEX IF NOT EXISTS idx_customers_status ON "DHL-Group-CRM".customers(status);
+CREATE INDEX IF NOT EXISTS idx_customers_fb_verified ON "DHL-Group-CRM".customers(facebook_verified);
 
 -- ==========================================================================
 -- 4. BẢNG: kiosks (Kiosk)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.kiosks (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".kiosks (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE CASCADE,
     facebook_name VARCHAR(255),
     facebook_id VARCHAR(100),
     facebook_link TEXT,
     facebook_group_link TEXT,
-    category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
-    business_type_id UUID REFERENCES public.business_types(id) ON DELETE SET NULL,
+    category_id UUID REFERENCES "DHL-Group-CRM".categories(id) ON DELETE SET NULL,
+    business_type_id UUID REFERENCES "DHL-Group-CRM".business_types(id) ON DELETE SET NULL,
     start_date DATE,
     end_date DATE,
     status VARCHAR(20) DEFAULT 'pending' NOT NULL,
@@ -87,18 +91,18 @@ CREATE TABLE IF NOT EXISTS public.kiosks (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_kiosks_customer ON public.kiosks(customer_id);
-CREATE INDEX IF NOT EXISTS idx_kiosks_status ON public.kiosks(status);
-CREATE INDEX IF NOT EXISTS idx_kiosks_end_date ON public.kiosks(end_date);
-CREATE INDEX IF NOT EXISTS idx_kiosks_business_type ON public.kiosks(business_type_id);
+CREATE INDEX IF NOT EXISTS idx_kiosks_customer ON "DHL-Group-CRM".kiosks(customer_id);
+CREATE INDEX IF NOT EXISTS idx_kiosks_status ON "DHL-Group-CRM".kiosks(status);
+CREATE INDEX IF NOT EXISTS idx_kiosks_end_date ON "DHL-Group-CRM".kiosks(end_date);
+CREATE INDEX IF NOT EXISTS idx_kiosks_business_type ON "DHL-Group-CRM".kiosks(business_type_id);
 
 -- ==========================================================================
 -- 5. BẢNG: payments (Thanh toán Kiosk)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.payments (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".payments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
-    kiosk_id UUID REFERENCES public.kiosks(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE CASCADE,
+    kiosk_id UUID REFERENCES "DHL-Group-CRM".kiosks(id) ON DELETE CASCADE,
     start_date DATE,
     end_date DATE,
     months INT DEFAULT 1 NOT NULL,
@@ -115,14 +119,14 @@ CREATE TABLE IF NOT EXISTS public.payments (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_payments_customer ON public.payments(customer_id);
-CREATE INDEX IF NOT EXISTS idx_payments_kiosk ON public.payments(kiosk_id);
-CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(payment_status);
+CREATE INDEX IF NOT EXISTS idx_payments_customer ON "DHL-Group-CRM".payments(customer_id);
+CREATE INDEX IF NOT EXISTS idx_payments_kiosk ON "DHL-Group-CRM".payments(kiosk_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON "DHL-Group-CRM".payments(payment_status);
 
 -- ==========================================================================
 -- 6. BẢNG: logs (Lịch sử thay đổi hệ thống)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.logs (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID,
     action VARCHAR(100) NOT NULL,
@@ -134,30 +138,60 @@ CREATE TABLE IF NOT EXISTS public.logs (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_logs_action ON public.logs(action);
-CREATE INDEX IF NOT EXISTS idx_logs_created_at ON public.logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_logs_action ON "DHL-Group-CRM".logs(action);
+CREATE INDEX IF NOT EXISTS idx_logs_created_at ON "DHL-Group-CRM".logs(created_at);
 
 -- ==========================================================================
--- 7. BẢNG: user_roles (Phân quyền người dùng)
+-- 7. BẢNG: user_roles (Phân quyền / tài khoản nhân viên)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.user_roles (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".user_roles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL UNIQUE,
+    user_id UUID NOT NULL,
     username VARCHAR(100),
     display_name VARCHAR(255),
     role VARCHAR(30) DEFAULT 'user' NOT NULL,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_roles_user ON public.user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user ON "DHL-Group-CRM".user_roles(user_id);
 
 -- ==========================================================================
--- 8. BẢNG: wallet_transactions (Lịch sử Ví Ảo KioskHub)
+-- 8. BẢNG: registration_requests (Hàng chờ kiểm duyệt đăng ký)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.wallet_transactions (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".registration_requests (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE SET NULL,
+    kiosk_id UUID REFERENCES "DHL-Group-CRM".kiosks(id) ON DELETE SET NULL,
+    payment_id UUID REFERENCES "DHL-Group-CRM".payments(id) ON DELETE SET NULL,
+    facebook_name VARCHAR(255),
+    facebook_id VARCHAR(100),
+    facebook_link TEXT,
+    phone VARCHAR(20),
+    category_id UUID REFERENCES "DHL-Group-CRM".categories(id) ON DELETE SET NULL,
+    business_type_id UUID REFERENCES "DHL-Group-CRM".business_types(id) ON DELETE SET NULL,
+    service_name VARCHAR(255),
+    months INT DEFAULT 1 NOT NULL,
+    total_amount NUMERIC(15, 2) DEFAULT 0 NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
+    rejection_reason TEXT,
+    reviewed_by UUID,
+    reviewed_at TIMESTAMPTZ,
+    submitted_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_registration_requests_status ON "DHL-Group-CRM".registration_requests(status);
+CREATE INDEX IF NOT EXISTS idx_registration_requests_reviewed_by ON "DHL-Group-CRM".registration_requests(reviewed_by);
+
+-- ==========================================================================
+-- 9. BẢNG: wallet_transactions (Lịch sử Ví Ảo KioskHub)
+-- ==========================================================================
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".wallet_transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    customer_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE CASCADE,
     transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('deposit', 'spending', 'bonus', 'refund')),
     amount NUMERIC(15, 2) NOT NULL,
     bonus_amount NUMERIC(15, 2) DEFAULT 0 NOT NULL,
@@ -170,15 +204,15 @@ CREATE TABLE IF NOT EXISTS public.wallet_transactions (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_customer ON public.wallet_transactions(customer_id);
-CREATE INDEX IF NOT EXISTS idx_wallet_transactions_order_code ON public.wallet_transactions(order_code);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_customer ON "DHL-Group-CRM".wallet_transactions(customer_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_order_code ON "DHL-Group-CRM".wallet_transactions(order_code);
 
 -- ==========================================================================
--- 9. BẢNG: facebook_tasks (9 Dịch vụ Tương tác Chéo Facebook)
+-- 10. BẢNG: facebook_tasks (9 Dịch vụ Tương tác Chéo Facebook)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.facebook_tasks (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".facebook_tasks (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    creator_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    creator_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE CASCADE,
     task_type VARCHAR(30) NOT NULL CHECK (task_type IN (
         'like_post', 'like_high_val', 'like_multi', 'like_page',
         'reaction_post', 'reaction_comment', 'follow_profile',
@@ -196,16 +230,16 @@ CREATE TABLE IF NOT EXISTS public.facebook_tasks (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_facebook_tasks_status ON public.facebook_tasks(status);
-CREATE INDEX IF NOT EXISTS idx_facebook_tasks_creator ON public.facebook_tasks(creator_id);
+CREATE INDEX IF NOT EXISTS idx_facebook_tasks_status ON "DHL-Group-CRM".facebook_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_facebook_tasks_creator ON "DHL-Group-CRM".facebook_tasks(creator_id);
 
 -- ==========================================================================
--- 10. BẢNG: task_submissions (Bằng chứng làm nhiệm vụ chéo)
+-- 11. BẢNG: task_submissions (Bằng chứng làm nhiệm vụ chéo)
 -- ==========================================================================
-CREATE TABLE IF NOT EXISTS public.task_submissions (
+CREATE TABLE IF NOT EXISTS "DHL-Group-CRM".task_submissions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    task_id UUID REFERENCES public.facebook_tasks(id) ON DELETE CASCADE,
-    worker_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    task_id UUID REFERENCES "DHL-Group-CRM".facebook_tasks(id) ON DELETE CASCADE,
+    worker_id UUID REFERENCES "DHL-Group-CRM".customers(id) ON DELETE CASCADE,
     proof_image_url TEXT,
     proof_data JSONB,
     status VARCHAR(20) DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
@@ -215,39 +249,38 @@ CREATE TABLE IF NOT EXISTS public.task_submissions (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_task_submissions_task ON public.task_submissions(task_id);
-CREATE INDEX IF NOT EXISTS idx_task_submissions_worker ON public.task_submissions(worker_id);
+CREATE INDEX IF NOT EXISTS idx_task_submissions_task ON "DHL-Group-CRM".task_submissions(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_submissions_worker ON "DHL-Group-CRM".task_submissions(worker_id);
 
 
 -- ============================================================================
 -- STORED PROCEDURES (RPC Functions)
+-- Mọi hàm đặt search_path = "DHL-Group-CRM", public để tự resolve object.
 -- ============================================================================
 
 -- ==========================================================================
 -- RPC 1: confirm_payment — Xác nhận thanh toán Kiosk
 -- ==========================================================================
-CREATE OR REPLACE FUNCTION confirm_payment(payment_id_input UUID)
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".confirm_payment(payment_id_input UUID)
 RETURNS VOID AS $$
 DECLARE
     v_payment RECORD;
 BEGIN
     SELECT * INTO v_payment
-    FROM public.payments
+    FROM "DHL-Group-CRM".payments
     WHERE id = payment_id_input AND payment_status = 'pending';
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Không tìm thấy thanh toán chờ duyệt.';
     END IF;
 
-    -- Update payment status
-    UPDATE public.payments
+    UPDATE "DHL-Group-CRM".payments
     SET payment_status = 'completed',
         confirmed_at = NOW(),
         updated_at = NOW()
     WHERE id = payment_id_input;
 
-    -- Activate Kiosk
-    UPDATE public.kiosks
+    UPDATE "DHL-Group-CRM".kiosks
     SET status = 'active',
         start_date = COALESCE(v_payment.start_date, CURRENT_DATE),
         end_date = COALESCE(v_payment.end_date, CURRENT_DATE + INTERVAL '1 month'),
@@ -255,19 +288,18 @@ BEGIN
         updated_at = NOW()
     WHERE id = v_payment.kiosk_id;
 
-    -- Update customer
-    UPDATE public.customers
+    UPDATE "DHL-Group-CRM".customers
     SET status = 'active',
         total_paid = COALESCE(total_paid, 0) + v_payment.total_amount,
         updated_at = NOW()
     WHERE id = v_payment.customer_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
 
 -- ==========================================================================
--- RPC 2: submit_registration_request — Đăng ký trực tuyến (Tạo Customer + Kiosk + Payment)
+-- RPC 2: submit_registration_request — Đăng ký trực tuyến (Customer + Kiosk + Payment + hàng chờ duyệt)
 -- ==========================================================================
-CREATE OR REPLACE FUNCTION submit_registration_request(
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".submit_registration_request(
     facebook_name_input TEXT,
     phone_input TEXT,
     facebook_id_input TEXT DEFAULT NULL,
@@ -290,31 +322,27 @@ DECLARE
     v_subtotal NUMERIC;
     v_total_amount NUMERIC;
 BEGIN
-    -- Get business type
     SELECT * INTO v_business_type
-    FROM public.business_types
+    FROM "DHL-Group-CRM".business_types
     WHERE id = business_type_id_input AND is_active = TRUE;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Loại hình kinh doanh không hợp lệ.';
     END IF;
 
-    -- Calculate dates and amounts
     v_start_date := CURRENT_DATE;
     v_end_date := CURRENT_DATE + (months_input || ' months')::INTERVAL;
     v_subtotal := v_business_type.price_per_month * months_input;
     v_total_amount := GREATEST(v_subtotal - COALESCE(discount_input, 0), 0);
 
-    -- Create customer
-    INSERT INTO public.customers (
+    INSERT INTO "DHL-Group-CRM".customers (
         facebook_name, phone, facebook_id, facebook_link, address, note, status
     ) VALUES (
         facebook_name_input, phone_input, facebook_id_input, facebook_link_input,
         address_input, note_input, 'pending'
     ) RETURNING id INTO v_customer_id;
 
-    -- Create kiosk
-    INSERT INTO public.kiosks (
+    INSERT INTO "DHL-Group-CRM".kiosks (
         customer_id, facebook_name, facebook_id, facebook_link,
         category_id, business_type_id, start_date, end_date, status
     ) VALUES (
@@ -322,8 +350,7 @@ BEGIN
         category_id_input, business_type_id_input, v_start_date, v_end_date, 'pending'
     ) RETURNING id INTO v_kiosk_id;
 
-    -- Create payment
-    INSERT INTO public.payments (
+    INSERT INTO "DHL-Group-CRM".payments (
         customer_id, kiosk_id, start_date, end_date, months,
         price_per_month, discount, discount_reason, total_amount,
         payment_method, payment_status
@@ -333,14 +360,109 @@ BEGIN
         discount_reason_input, v_total_amount, 'transfer', 'pending'
     ) RETURNING id INTO v_payment_id;
 
+    -- Đưa vào hàng chờ kiểm duyệt
+    INSERT INTO "DHL-Group-CRM".registration_requests (
+        customer_id, kiosk_id, payment_id, facebook_name, facebook_id, facebook_link,
+        phone, category_id, business_type_id, service_name, months, total_amount, status
+    ) VALUES (
+        v_customer_id, v_kiosk_id, v_payment_id, facebook_name_input, facebook_id_input,
+        facebook_link_input, phone_input, category_id_input, business_type_id_input,
+        v_business_type.name, months_input, v_total_amount, 'pending'
+    );
+
     RETURN v_payment_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
 
 -- ==========================================================================
--- RPC 3: process_wallet_deposit — Nạp tiền Ví Ảo qua PayOS
+-- RPC 3: approve_registration_request — Duyệt đăng ký (kích hoạt kiosk)
 -- ==========================================================================
-CREATE OR REPLACE FUNCTION process_wallet_deposit(
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".approve_registration_request(request_id_input UUID)
+RETURNS VOID AS $$
+DECLARE
+    v_req RECORD;
+BEGIN
+    SELECT * INTO v_req
+    FROM "DHL-Group-CRM".registration_requests
+    WHERE id = request_id_input AND status = 'pending';
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Không tìm thấy yêu cầu đăng ký chờ duyệt.';
+    END IF;
+
+    UPDATE "DHL-Group-CRM".registration_requests
+    SET status = 'approved', reviewed_at = NOW(), updated_at = NOW()
+    WHERE id = request_id_input;
+
+    IF v_req.payment_id IS NOT NULL THEN
+        PERFORM "DHL-Group-CRM".confirm_payment(v_req.payment_id);
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
+
+-- ==========================================================================
+-- RPC 4: reject_registration_request — Từ chối đăng ký
+-- ==========================================================================
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".reject_registration_request(
+    request_id_input UUID,
+    reason_input TEXT DEFAULT NULL
+) RETURNS VOID AS $$
+DECLARE
+    v_req RECORD;
+BEGIN
+    SELECT * INTO v_req
+    FROM "DHL-Group-CRM".registration_requests
+    WHERE id = request_id_input AND status = 'pending';
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Không tìm thấy yêu cầu đăng ký chờ duyệt.';
+    END IF;
+
+    UPDATE "DHL-Group-CRM".registration_requests
+    SET status = 'rejected', rejection_reason = reason_input,
+        reviewed_at = NOW(), updated_at = NOW()
+    WHERE id = request_id_input;
+
+    UPDATE "DHL-Group-CRM".payments
+    SET payment_status = 'cancelled', updated_at = NOW()
+    WHERE id = v_req.payment_id;
+
+    UPDATE "DHL-Group-CRM".kiosks
+    SET status = 'cancelled', updated_at = NOW()
+    WHERE id = v_req.kiosk_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
+
+-- ==========================================================================
+-- RPC 5: get_categories_with_stats — Danh mục kèm số liệu tổng hợp
+-- ==========================================================================
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".get_categories_with_stats()
+RETURNS TABLE (
+    id UUID,
+    name VARCHAR,
+    description TEXT,
+    is_active BOOLEAN,
+    sort_order INT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    business_type_count BIGINT,
+    kiosk_count BIGINT
+) AS $$
+    SELECT
+        c.id, c.name, c.description, c.is_active, c.sort_order,
+        c.created_at, c.updated_at,
+        COUNT(DISTINCT bt.id) AS business_type_count,
+        COUNT(DISTINCT k.id) AS kiosk_count
+    FROM "DHL-Group-CRM".categories c
+    LEFT JOIN "DHL-Group-CRM".business_types bt ON bt.category_id = c.id
+    LEFT JOIN "DHL-Group-CRM".kiosks k ON k.category_id = c.id
+    GROUP BY c.id;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
+
+-- ==========================================================================
+-- RPC 6: process_wallet_deposit — Nạp tiền Ví Ảo qua PayOS
+-- ==========================================================================
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".process_wallet_deposit(
     p_customer_id UUID,
     p_amount NUMERIC,
     p_bonus_amount NUMERIC,
@@ -352,7 +474,7 @@ DECLARE
     v_new_balance NUMERIC;
     v_new_bonus NUMERIC;
 BEGIN
-    INSERT INTO public.wallet_transactions (
+    INSERT INTO "DHL-Group-CRM".wallet_transactions (
         customer_id, transaction_type, amount, bonus_amount,
         order_code, status, description
     ) VALUES (
@@ -360,7 +482,7 @@ BEGIN
         p_order_code, 'completed', p_description
     ) RETURNING id INTO v_transaction_id;
 
-    UPDATE public.customers
+    UPDATE "DHL-Group-CRM".customers
     SET wallet_balance = COALESCE(wallet_balance, 0) + p_amount,
         bonus_balance = COALESCE(bonus_balance, 0) + p_bonus_amount,
         updated_at = NOW()
@@ -376,12 +498,12 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
     RETURN jsonb_build_object('success', false, 'error', SQLERRM);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
 
 -- ==========================================================================
--- RPC 4: pay_via_wallet — Thanh toán dịch vụ bằng Ví Ảo
+-- RPC 7: pay_via_wallet — Thanh toán dịch vụ bằng Ví Ảo
 -- ==========================================================================
-CREATE OR REPLACE FUNCTION pay_via_wallet(
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".pay_via_wallet(
     p_customer_id UUID,
     p_amount NUMERIC,
     p_description TEXT
@@ -396,7 +518,7 @@ DECLARE
 BEGIN
     SELECT COALESCE(wallet_balance, 0), COALESCE(bonus_balance, 0)
     INTO v_current_balance, v_current_bonus
-    FROM public.customers
+    FROM "DHL-Group-CRM".customers
     WHERE id = p_customer_id;
 
     v_total_available := v_current_balance + v_current_bonus;
@@ -412,13 +534,13 @@ BEGIN
         v_deduct_bonus := p_amount - v_current_balance;
     END IF;
 
-    UPDATE public.customers
+    UPDATE "DHL-Group-CRM".customers
     SET wallet_balance = wallet_balance - v_deduct_main,
         bonus_balance = bonus_balance - v_deduct_bonus,
         updated_at = NOW()
     WHERE id = p_customer_id;
 
-    INSERT INTO public.wallet_transactions (
+    INSERT INTO "DHL-Group-CRM".wallet_transactions (
         customer_id, transaction_type, amount, status, description
     ) VALUES (
         p_customer_id, 'spending', -p_amount, 'completed', p_description
@@ -431,12 +553,12 @@ BEGIN
         'remaining_bonus_balance', v_current_bonus - v_deduct_bonus
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
 
 -- ==========================================================================
--- RPC 5: process_task_reward — Trả thưởng nhiệm vụ chéo Facebook
+-- RPC 8: process_task_reward — Trả thưởng nhiệm vụ chéo Facebook
 -- ==========================================================================
-CREATE OR REPLACE FUNCTION process_task_reward(
+CREATE OR REPLACE FUNCTION "DHL-Group-CRM".process_task_reward(
     p_submission_id UUID,
     p_worker_id UUID,
     p_reward_amount NUMERIC
@@ -444,7 +566,7 @@ CREATE OR REPLACE FUNCTION process_task_reward(
 DECLARE
     v_task_id UUID;
 BEGIN
-    UPDATE public.task_submissions
+    UPDATE "DHL-Group-CRM".task_submissions
     SET status = 'approved', updated_at = NOW()
     WHERE id = p_submission_id AND status = 'pending'
     RETURNING task_id INTO v_task_id;
@@ -453,18 +575,18 @@ BEGIN
         RAISE EXCEPTION 'Nhiệm vụ không tồn tại hoặc đã được xử lý.';
     END IF;
 
-    UPDATE public.facebook_tasks
+    UPDATE "DHL-Group-CRM".facebook_tasks
     SET completed_quantity = completed_quantity + 1,
         status = CASE WHEN completed_quantity + 1 >= target_quantity THEN 'completed' ELSE status END,
         updated_at = NOW()
     WHERE id = v_task_id;
 
-    UPDATE public.customers
+    UPDATE "DHL-Group-CRM".customers
     SET wallet_balance = COALESCE(wallet_balance, 0) + p_reward_amount,
         updated_at = NOW()
     WHERE id = p_worker_id;
 
-    INSERT INTO public.wallet_transactions (
+    INSERT INTO "DHL-Group-CRM".wallet_transactions (
         customer_id, transaction_type, amount, status, description
     ) VALUES (
         p_worker_id, 'bonus', p_reward_amount, 'completed',
@@ -473,23 +595,44 @@ BEGIN
 
     RETURN jsonb_build_object('success', true);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = "DHL-Group-CRM", public;
 
 
 -- ============================================================================
--- ENABLE ROW LEVEL SECURITY (RLS) — Tùy chọn, có thể bật theo nhu cầu
+-- GRANTS — BẮT BUỘC cho schema tùy chỉnh (public thì Supabase tự grant, schema
+-- riêng thì KHÔNG). Thiếu phần này FE sẽ báo "permission denied for schema".
 -- ============================================================================
--- ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.business_types ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.kiosks ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.facebook_tasks ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE public.task_submissions ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA "DHL-Group-CRM" TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL TABLES IN SCHEMA "DHL-Group-CRM" TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA "DHL-Group-CRM" TO anon, authenticated, service_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA "DHL-Group-CRM" TO anon, authenticated, service_role;
+
+-- Áp dụng cho các object tạo về sau
+ALTER DEFAULT PRIVILEGES IN SCHEMA "DHL-Group-CRM"
+    GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "DHL-Group-CRM"
+    GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "DHL-Group-CRM"
+    GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
 
 -- ============================================================================
--- HOÀN TẤT! Chạy file này 1 lần duy nhất trong Supabase SQL Editor.
+-- ROW LEVEL SECURITY (RLS) — Tùy chọn, bật theo nhu cầu
+-- ============================================================================
+-- ALTER TABLE "DHL-Group-CRM".categories ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".business_types ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".customers ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".kiosks ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".payments ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".logs ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".user_roles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".registration_requests ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".wallet_transactions ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".facebook_tasks ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "DHL-Group-CRM".task_submissions ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- HOÀN TẤT! Sau khi chạy file này, còn 2 việc BẮT BUỘC để FE đọc được schema:
+--   1. Dashboard → Settings → API → "Exposed schemas": thêm  DHL-Group-CRM
+--   2. supabase-js phải set  db: { schema: 'DHL-Group-CRM' }  (đã sửa trong code FE)
 -- ============================================================================
