@@ -77,6 +77,19 @@ INSERT INTO auth.users (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- QUAN TRỌNG: GoTrue (Auth) đọc các cột token vào kiểu string, nếu để NULL sẽ lỗi
+-- "Database error querying schema" khi đăng nhập. Ép về '' cho các user seed.
+UPDATE auth.users SET
+    confirmation_token         = COALESCE(confirmation_token, ''),
+    recovery_token             = COALESCE(recovery_token, ''),
+    email_change               = COALESCE(email_change, ''),
+    email_change_token_new     = COALESCE(email_change_token_new, ''),
+    email_change_token_current = COALESCE(email_change_token_current, ''),
+    phone_change               = COALESCE(phone_change, ''),
+    phone_change_token         = COALESCE(phone_change_token, ''),
+    reauthentication_token     = COALESCE(reauthentication_token, '')
+WHERE email IN ('admin@dhl-kiosk.com', 'user1@dhl-kiosk.com', 'user2@dhl-kiosk.com');
+
 -- Tạo identities cho auth users
 INSERT INTO auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
 VALUES
