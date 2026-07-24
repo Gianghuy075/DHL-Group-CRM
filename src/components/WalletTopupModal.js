@@ -221,9 +221,6 @@ function renderTopupStep2QR() {
           </div>
         </div>
 
-        <div class="payos-polling-status" id="topup-status-indicator">
-          <span class="spinner-small"></span> Đang chờ ghi nhận chuyển khoản...
-        </div>
 
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="topup-step2-back">Quay lại</button>
