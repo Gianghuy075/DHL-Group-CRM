@@ -1,6 +1,6 @@
 import { Modal } from './components/Modal.js';
 import { Toast } from './components/Toast.js';
-import { ADMIN_NAV_SECTIONS, USER_NAV_SECTIONS, REVIEWER_NAV_SECTIONS, PAGE_TITLES } from './constants/navigation.js';
+import { ADMIN_NAV_SECTIONS, USER_NAV_SECTIONS, PAGE_TITLES } from './constants/navigation.js';
 import { AppLayout } from './layouts/AppLayout.js';
 import { createRouter } from './router/index.js';
 import { getSupabaseStatus } from './supabase/client.js';
