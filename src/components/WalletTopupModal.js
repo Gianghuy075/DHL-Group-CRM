@@ -178,7 +178,7 @@ function renderTopupStep2QR() {
         <div class="payos-qr-wrapper">
           <div class="payos-qr-box">
             <img class="payos-qr-image" src="${escapeHtml(qrImageUrl)}" alt="Mã QR thanh toán" />
-            <div class="payos-qr-badge">Quét QR để nạp tiền vào ví tự động</div>
+            <div class="payos-qr-badge">Quét QR để nạp tiền</div>
           </div>
 
           <div class="payos-transfer-details">
