@@ -1,10 +1,10 @@
 function readPayOSConfig() {
   const custom = window.DHL_CONFIG?.payos || {};
   return {
-    clientId: custom.clientId || '',
-    apiKey: custom.apiKey || '',
-    checksumKey: custom.checksumKey || '',
-    apiEndpoint: custom.apiEndpoint || 'https://api-merchant.payos.vn/v2',
+    clientId: (custom.clientId || '9cf9982b-46e0-44df-a7b3-c43a27303bb0').trim(),
+    apiKey: (custom.apiKey || 'eed33900-3e06-4963-835e-968dbc8aec18').trim(),
+    checksumKey: (custom.checksumKey || 'da9ff359d5a66c705e7e5f94fb90719c327d983ce91f83').trim(),
+    apiEndpoint: (custom.apiEndpoint || 'https://api-merchant.payos.vn/v2').trim(),
   };
 }
 
@@ -17,15 +17,16 @@ export const PAYOS_CONFIG = new Proxy({}, {
 
 /**
  * Calculates PayOS request signature using HMAC SHA-256.
- * PayOS signature string format: sort keys alphabetically, join with & (e.g. amount=100000&cancelUrl=...&description=...&orderCode=123&returnUrl=...)
+ * PayOS signature format: sort keys alphabetically (amount, cancelUrl, description, orderCode, returnUrl)
  */
 export async function calculatePayOSSignature(data, checksumKey = PAYOS_CONFIG.checksumKey) {
+  const cleanKey = String(checksumKey || '').trim().replace(/^["']|["']$/g, '');
   const sortedKeys = Object.keys(data).sort();
   const signatureData = sortedKeys
     .map((key) => `${key}=${data[key] ?? ''}`)
     .join('&');
 
-  return hmacSha256(signatureData, checksumKey);
+  return hmacSha256(signatureData, cleanKey);
 }
 
 /**
