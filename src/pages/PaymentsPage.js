@@ -51,9 +51,8 @@ const state = {
 export function PaymentsPage() {
   return `
     ${PageHeader({
-    title: 'Duyệt & Quản lý Thanh toán',
-    description: 'Quản lý, đối soát và phê duyệt các giao dịch thanh toán Kiosk của khách hàng.',
-  })}
+      title: 'Lịch sử Thanh toán',
+    })}
     ${Toolbar({
     children: `
         <input

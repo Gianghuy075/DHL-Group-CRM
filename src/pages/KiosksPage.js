@@ -32,8 +32,7 @@ const state = {
 export function KiosksPage() {
   return `
     ${PageHeader({
-      title: 'Kiosk',
-      description: 'Quản lý các tài khoản Facebook được phép đăng bài.',
+      title: 'Quản lý Kiosk',
       actions: '<button class="btn-primary" id="add-kiosk-button" type="button">+ Thêm Kiosk</button>',
     })}
     ${Toolbar({

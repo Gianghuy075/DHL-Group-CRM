@@ -30,8 +30,7 @@ const state = {
 export function FacebookTasksPage() {
   return `
     ${PageHeader({
-    title: 'Hệ thống Tương tác Chéo Facebook (Ví Ảo)',
-    description: 'Đăng & Làm nhiệm vụ Like, Share, Comment, Follow. Tự động kiểm tra qua Facebook Graph API & Trả thưởng vào Ví Ảo.',
+    title: 'Nhiệm vụ Tương tác Facebook',
   })}
 
     <div class="tasks-page-container">
@@ -39,10 +38,10 @@ export function FacebookTasksPage() {
 
       <div class="task-tabs-bar">
         <button class="task-tab ${state.activeTab === 'marketplace' ? 'active' : ''}" type="button" data-task-tab="marketplace">
-          ⚡ Chợ Nhiệm vụ Chéo
+          ⚡ Chợ Nhiệm vụ
         </button>
         <button class="task-tab ${state.activeTab === 'create' ? 'active' : ''}" type="button" data-task-tab="create">
-          ➕ Đăng Nhiệm vụ Mới
+          ➕ Đăng Nhiệm vụ
         </button>
         <button class="task-tab ${state.activeTab === 'mytasks' ? 'active' : ''}" type="button" data-task-tab="mytasks">
           📋 Nhiệm vụ của Tôi
@@ -50,7 +49,7 @@ export function FacebookTasksPage() {
       </div>
 
       <div id="tasks-tab-content">
-        <div class="empty-state"><div class="spinner-small"></div> Đang tải hệ thống nhiệm vụ chéo...</div>
+        <div class="empty-state"><div class="spinner-small"></div> Đang tải...</div>
       </div>
     </div>
   `;
@@ -128,33 +127,26 @@ function renderWalletBanner() {
         <div class="mini-card-info">
           <span class="mini-card-icon font-emoji">💳</span>
           <div>
-            <div class="mini-card-title">Số dư Ví Ảo KioskHub: <strong class="text-gold">${formatCurrency(totalAvailable)}</strong></div>
-            <div class="mini-card-sub">${bonusBalance > 0 ? `Bao gồm ${formatCurrency(bonusBalance)} tiền thưởng ưu đãi` : 'Sử dụng để đăng nhiệm vụ hoặc thanh toán dịch vụ'}</div>
+            <div class="mini-card-title">Ví Ảo: <strong class="text-gold">${formatCurrency(totalAvailable)}</strong> ${bonusBalance > 0 ? `<small class="text-bonus">(+${formatCurrency(bonusBalance)} thưởng)</small>` : ''}</div>
           </div>
         </div>
-        <button class="btn-primary compact" type="button" id="tasks-topup-btn">💳 Nạp Ví Ngay</button>
+        <button class="btn-primary compact" type="button" id="tasks-topup-btn">Nạp Ví</button>
       </div>
 
       ${isVerified ? `
         <div class="fb-verified-mini-banner success">
           <div class="mini-card-info">
             <span class="banner-icon font-emoji">✅</span>
-            <div>
-              <div class="mini-card-title">Tài khoản Facebook: <strong>${escapeHtml(state.currentCustomer?.facebook_name || 'Đã xác thực')}</strong> (Công khai · ${totalReach} Bạn bè/Followers)</div>
-              <div class="sub-text">✅ Đã đủ điều kiện Đăng & Làm nhiệm vụ tương tác!</div>
-            </div>
+            <div class="mini-card-title">FB: <strong>${escapeHtml(state.currentCustomer?.facebook_name || 'Đã xác thực')}</strong> (${totalReach} Bạn bè)</div>
           </div>
         </div>
       ` : `
         <div class="fb-verified-mini-banner warning">
           <div class="mini-card-info">
             <span class="banner-icon font-emoji">⚠️</span>
-            <div>
-              <strong>Tài khoản Facebook chưa được xác thực Graph API</strong>
-              <div class="sub-text">Yêu cầu: Bật Chế độ Công khai / Người nổi tiếng và có tối thiểu 100 bạn bè/followers để tham gia đăng & làm nhiệm vụ.</div>
-            </div>
+            <div class="mini-card-title">Chưa xác thực Facebook</div>
           </div>
-          <button class="btn-secondary compact" type="button" id="tasks-verify-fb-btn">🛡️ Xác thực Facebook Ngay ➔</button>
+          <button class="btn-secondary compact" type="button" id="tasks-verify-fb-btn">Xác thực ➔</button>
         </div>
       `}
     </div>
@@ -227,21 +219,11 @@ async function renderMarketplaceTab(container) {
   state.activeTasks = tasks || [];
 
   container.innerHTML = `
-    <div class="marketplace-filter-bar">
-      <span class="filter-label">Lọc loại tương tác:</span>
-      <button class="filter-chip ${state.selectedTaskTypeFilter === '' ? 'active' : ''}" type="button" data-filter-type="">Tất cả</button>
-      ${TASK_TYPES.map((t) => `
-        <button class="filter-chip ${state.selectedTaskTypeFilter === t.id ? 'active' : ''}" type="button" data-filter-type="${t.id}">
-          ${t.icon} ${t.name}
-        </button>
-      `).join('')}
-    </div>
-
     ${!state.activeTasks.length ? `
       <div class="empty-state">
         <div class="empty-state-icon">🎯</div>
         <div class="empty-state-title">Chưa có nhiệm vụ mới</div>
-        <div class="empty-state-message">Hiện chưa có nhiệm vụ chéo nào thuộc bộ lọc này. Hãy chuyển sang tab "Đăng Nhiệm vụ Mới" để tạo nhiệm vụ!</div>
+        <div class="empty-state-message">Hiện chưa có nhiệm vụ chéo nào thuộc danh mục này. Hãy chọn dịch vụ khác ở thanh Sidebar góc trái hoặc chuyển sang tab "Đăng Nhiệm vụ Mới" để tạo!</div>
       </div>
     ` : `
       <div class="tasks-grid">
@@ -249,14 +231,6 @@ async function renderMarketplaceTab(container) {
       </div>
     `}
   `;
-
-  // Bind Filters
-  container.querySelectorAll('[data-filter-type]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.selectedTaskTypeFilter = btn.dataset.filterType;
-      renderMarketplaceTab(container);
-    });
-  });
 
   // Bind Work Submission Events
   container.querySelectorAll('[data-do-task]').forEach((btn) => {
@@ -308,12 +282,11 @@ function renderTaskCard(task) {
           <span>${typeObj.icon}</span>
           <strong>${typeObj.name}</strong>
         </div>
-        <div class="task-reward-tag">+${formatCurrency(task.unit_price)} / lượt</div>
+        <div class="task-reward-tag">+${formatCurrency(task.unit_price)}</div>
       </div>
 
       <div class="task-card-body">
         <div class="task-url-box">
-          <span class="url-label">Link Facebook:</span>
           <a class="task-url-link" href="${escapeHtml(task.post_url)}" target="_blank" rel="noreferrer">
             ${escapeHtml(task.post_url)} ↗
           </a>
@@ -322,14 +295,14 @@ function renderTaskCard(task) {
           <div class="progress-fill" style="width: ${Math.min(100, (task.completed_quantity / task.target_quantity) * 100)}%;"></div>
         </div>
         <div class="task-meta-info">
-          <span>Còn lại: <strong>${remaining} / ${task.target_quantity} lượt</strong></span>
-          <span>Người đăng: <strong>${escapeHtml(task.customers?.facebook_name || 'Khách hàng')}</strong></span>
+          <span>Còn lại: <strong>${remaining}/${task.target_quantity}</strong></span>
+          <span>Đăng bởi: <strong>${escapeHtml(task.customers?.facebook_name || 'Khách hàng')}</strong></span>
         </div>
       </div>
 
       <div class="task-card-footer">
-        <a class="btn-secondary compact" href="${escapeHtml(task.post_url)}" target="_blank" rel="noreferrer">1. Mở Facebook Tương Tác ↗</a>
-        <button class="btn-primary compact" type="button" data-do-task="${escapeHtml(task.id)}">2. Kiểm Tra Graph API ➔</button>
+        <a class="btn-secondary compact" href="${escapeHtml(task.post_url)}" target="_blank" rel="noreferrer">Mở Facebook ↗</a>
+        <button class="btn-primary compact" type="button" data-do-task="${escapeHtml(task.id)}">Nhận thưởng ➔</button>
       </div>
     </div>
   `;

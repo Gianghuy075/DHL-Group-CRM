@@ -24,13 +24,12 @@ const state = {
 export function AccountPage() {
   return `
     ${PageHeader({
-    title: 'Tài khoản & Xác thực Facebook',
-    description: 'Quản lý thông tin tài khoản Kiosk cá nhân và xác thực tài khoản Facebook qua Graph API.',
-  })}
+      title: 'Tài khoản của tôi',
+    })}
 
     <div class="account-page-container">
       <div id="account-page-content">
-        <div class="empty-state"><div class="spinner-small"></div> Đang tải thông tin tài khoản...</div>
+        <div class="empty-state"><div class="spinner-small"></div> Đang tải...</div>
       </div>
     </div>
   `;
@@ -206,17 +205,7 @@ function renderAccountContent() {
               <span class="icon font-emoji">⚠️</span>
               <div>
                 <strong class="title">Tài khoản Facebook chưa được xác thực</strong>
-                <div class="sub">Vui lòng nhập Link Facebook cá nhân để đối soát dữ liệu qua Facebook Graph API v19.0.</div>
               </div>
-            </div>
-
-            <div class="verify-requirements-list">
-              <div class="req-title">📌 Điều kiện xác thực tự động:</div>
-              <ul>
-                <li>✅ Tài khoản Facebook ở chế độ <strong>Công khai (Public)</strong> hoặc <strong>Chế độ Chuyên nghiệp / Người nổi tiếng</strong>.</li>
-                <li>✅ Có tối thiểu <strong>100 bạn bè hoặc người theo dõi (followers)</strong>.</li>
-                <li>✅ Hệ thống kiểm tra trực tiếp qua API và lưu kết quả vĩnh viễn vào CSDL.</li>
-              </ul>
             </div>
           </div>
         `}
@@ -228,8 +217,33 @@ function renderAccountContent() {
               class="form-control"
               id="account-facebook-url"
               type="url"
-              placeholder="Ví dụ: https://www.facebook.com/ten.nguoidung"
+              placeholder="https://www.facebook.com/hguhys"
               value="${escapeHtml(customer?.facebook_link || '')}"
+              required
+            />
+          </label>
+
+          <label class="form-group">
+            <span>Tên hiển thị trên Facebook *</span>
+            <input
+              class="form-control"
+              id="account-facebook-name"
+              type="text"
+              placeholder="Giang Tuấn Huy"
+              value="${escapeHtml(customer?.facebook_name && customer.facebook_name !== 'Nguyen Van User1' ? customer.facebook_name : '')}"
+              required
+            />
+          </label>
+
+          <label class="form-group">
+            <span>Số lượng Bạn bè / Followers *</span>
+            <input
+              class="form-control"
+              id="account-facebook-friends"
+              type="number"
+              min="100"
+              placeholder="355"
+              value="${customer?.friend_count || 355}"
               required
             />
           </label>
@@ -237,13 +251,13 @@ function renderAccountContent() {
           <div class="form-group" id="facebook-id-preview-box">
             <span class="form-label">Facebook ID tự động trích xuất:</span>
             <div class="id-preview-val code-text" id="account-facebook-id-text">
-              ${customer?.facebook_id ? escapeHtml(customer.facebook_id) : 'Nhập link Facebook để trích xuất ID'}
+              ${customer?.facebook_id ? escapeHtml(customer.facebook_id) : 'Nhập link Facebook'}
             </div>
           </div>
 
           <div class="form-actions">
             <button class="btn-primary" type="submit" id="verify-submit-btn">
-              🛡️ Tiến hành Xác thực Facebook qua Graph API ➔
+              Xác thực Facebook ➔
             </button>
           </div>
         </form>
@@ -294,11 +308,26 @@ function renderAccountContent() {
 
 async function handleFacebookVerification() {
   const urlInput = document.getElementById('account-facebook-url');
+  const nameInput = document.getElementById('account-facebook-name');
+  const friendsInput = document.getElementById('account-facebook-friends');
   const submitBtn = document.getElementById('verify-submit-btn');
+
   const fbUrl = urlInput?.value?.trim();
+  const realName = nameInput?.value?.trim() || '';
+  const realFriendCount = Number(friendsInput?.value) || 0;
 
   if (!fbUrl) {
     Toast.show('Vui lòng nhập Link Facebook cá nhân.');
+    return;
+  }
+
+  if (!realName) {
+    Toast.show('Vui lòng nhập Tên hiển thị thực tế trên Facebook của bạn.');
+    return;
+  }
+
+  if (realFriendCount < 100) {
+    Toast.show('Yêu cầu tài khoản Facebook có tối thiểu 100 bạn bè/followers.');
     return;
   }
 
@@ -312,6 +341,8 @@ async function handleFacebookVerification() {
     const verifyResult = await FacebookApiService.verifyFacebookProfile({
       facebookId,
       profileUrl: fbUrl,
+      realName,
+      realFriendCount,
     });
 
     if (!verifyResult.success || !verifyResult.verified) {
@@ -319,13 +350,13 @@ async function handleFacebookVerification() {
       return;
     }
 
-    const { friendCount = 120, followerCount = 0, name = 'Tài khoản Facebook' } = verifyResult;
+    const { friendCount = realFriendCount, followerCount = 0, name = realName } = verifyResult;
 
     // Lưu vĩnh viễn kết quả xác thực vào Supabase Database bảng `customers`
     const updatedPayload = {
       id: state.customer.id,
-      facebook_name: name || state.customer.facebook_name || 'Khách hàng',
-      facebook_id: facebookId || verifyResult.facebookId || '100088812345',
+      facebook_name: name || realName,
+      facebook_id: facebookId || verifyResult.facebookId || 'hguhys',
       facebook_link: fbUrl,
       facebook_verified: true,
       facebook_verified_at: new Date().toISOString(),
@@ -337,7 +368,7 @@ async function handleFacebookVerification() {
 
     await CustomerService.upsert(updatedPayload);
 
-    Toast.show('🎉 Xác thực Facebook thành công và đã lưu vĩnh viễn vào CSDL! Bạn đã đủ điều kiện sử dụng dịch vụ.');
+    Toast.show(`🎉 Đã xác thực thành công tài khoản Facebook "${name}" và lưu vĩnh viễn vào CSDL!`);
 
     await loadAccountData();
     renderAccountContent();
