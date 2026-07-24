@@ -2179,34 +2179,62 @@ textarea {
   gap: 20px;
 }
 
+.tasks-banner-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
 .tasks-wallet-mini-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  gap: 16px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tasks-wallet-mini-card:hover {
+  border-color: rgba(251, 191, 36, 0.6);
+  box-shadow: 0 6px 24px rgba(251, 191, 36, 0.15);
 }
 
 .mini-card-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .mini-card-icon {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 12px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .mini-card-title {
-  font-size: 14px;
-  color: #e2e8f0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.4;
 }
 
 .mini-card-sub {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #94a3b8;
+  margin-top: 3px;
 }
 
 .task-tabs-bar {
@@ -2506,22 +2534,61 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 13px;
+  gap: 16px;
+  padding: 16px 24px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
 }
 
-.fb-verified-mini-banner.success {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #4ade80;
+.fb-verified-mini-banner .banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .fb-verified-mini-banner.warning {
-  background: rgba(234, 179, 8, 0.12);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(161, 98, 7, 0.16));
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #fef08a;
+}
+
+.fb-verified-mini-banner.warning .banner-icon {
+  background: rgba(234, 179, 8, 0.16);
   border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.fb-verified-mini-banner.warning strong {
   color: #facc15;
+}
+
+.fb-verified-mini-banner.warning .sub-text {
+  font-size: 12.5px;
+  color: #fde047;
+  opacity: 0.9;
+  margin-top: 3px;
+}
+
+.fb-verified-mini-banner.success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(21, 128, 61, 0.16));
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
+.fb-verified-mini-banner.success .banner-icon {
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.fb-verified-mini-banner.success strong {
+  color: #4ade80;
 }
 
 .card-action-bar {

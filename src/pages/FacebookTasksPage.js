@@ -132,15 +132,22 @@ function renderWalletBanner() {
 
       ${isVerified ? `
         <div class="fb-verified-mini-banner success">
-          <span>✅</span>
-          <div>Tài khoản Facebook: <strong>${escapeHtml(state.currentCustomer?.facebook_name || 'Đã xác thực')}</strong> (Công khai · ${totalReach} Bạn bè/Followers) — Đã đủ điều kiện Đăng & Làm nhiệm vụ!</div>
+          <div class="mini-card-info">
+            <span class="banner-icon font-emoji">✅</span>
+            <div>
+              <div class="mini-card-title">Tài khoản Facebook: <strong>${escapeHtml(state.currentCustomer?.facebook_name || 'Đã xác thực')}</strong> (Công khai · ${totalReach} Bạn bè/Followers)</div>
+              <div class="sub-text">✅ Đã đủ điều kiện Đăng & Làm nhiệm vụ tương tác!</div>
+            </div>
+          </div>
         </div>
       ` : `
         <div class="fb-verified-mini-banner warning">
-          <span>⚠️</span>
-          <div>
-            <strong>Tài khoản Facebook chưa được xác thực Graph API</strong>
-            <div class="sub-text">Yêu cầu: Bật Chế độ Công khai / Người nổi tiếng và có tối thiểu 100 bạn bè/followers để tham gia đăng & làm nhiệm vụ.</div>
+          <div class="mini-card-info">
+            <span class="banner-icon font-emoji">⚠️</span>
+            <div>
+              <strong>Tài khoản Facebook chưa được xác thực Graph API</strong>
+              <div class="sub-text">Yêu cầu: Bật Chế độ Công khai / Người nổi tiếng và có tối thiểu 100 bạn bè/followers để tham gia đăng & làm nhiệm vụ.</div>
+            </div>
           </div>
           <button class="btn-secondary compact" type="button" id="tasks-verify-fb-btn">🛡️ Xác thực Facebook Ngay ➔</button>
         </div>
