@@ -12,7 +12,7 @@ export const PayOSService = {
   },
 
   /**
-   * Creates a PayOS Payment Request via Supabase Edge Function (or client fallback)
+   * Creates a PayOS Payment Request via Vercel API / Supabase Edge Function / Client fallback
    */
   async createPaymentLink({
     orderCode,
@@ -39,7 +39,35 @@ export const PayOSService = {
       buyerName: customerName || undefined,
     };
 
-    // 1. Uu tien goi qua Supabase Edge Function (Bao mat bang bien môi truong Server)
+    // 1. Thử gọi Vercel Serverless Function (/api/payos-payment) nếu chạy trên Vercel
+    try {
+      const vercelRes = await fetch('/api/payos-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (vercelRes.ok) {
+        const vercelData = await vercelRes.json();
+        if (vercelData.success) {
+          return {
+            success: true,
+            orderCode: vercelData.orderCode || normalizedOrderCode,
+            checkoutUrl: vercelData.checkoutUrl,
+            qrCode: vercelData.qrCode,
+            accountNo: vercelData.accountNo || '',
+            accountName: vercelData.accountName || '',
+            amount: payload.amount,
+            description: cleanDescription,
+            viaVercel: true,
+          };
+        }
+      }
+    } catch (vErr) {
+      // Bỏ qua nếu không chạy trên Vercel
+    }
+
+    // 2. Thử gọi Supabase Edge Function nếu đã deploy
     const supabase = getSupabaseClient();
     if (supabase?.functions) {
       try {
@@ -61,13 +89,13 @@ export const PayOSService = {
           };
         }
       } catch (edgeErr) {
-        console.warn('[PayOSService] Edge function invoke failed, trying client fallback:', edgeErr);
+        console.warn('[PayOSService] Edge function invoke failed:', edgeErr);
       }
     }
 
-    // 2. Client fallback neu dung window.DHL_CONFIG.payos o local
+    // 3. Fallback client side nếu cài ở window.DHL_CONFIG.payos
     if (!PAYOS_CONFIG.clientId || !PAYOS_CONFIG.apiKey) {
-      throw new Error('Chưa cấu hình khóa PayOS trong Supabase Edge Function Secrets hoặc window.DHL_CONFIG.payos.');
+      throw new Error('Chưa cấu hình biến môi trường PAYOS_CLIENT_ID, PAYOS_API_KEY trên Vercel Environment Variables.');
     }
 
     const signature = await calculatePayOSSignature({
@@ -115,12 +143,34 @@ export const PayOSService = {
   },
 
   /**
-   * Checks status of a payment request via Edge Function or Direct API
+   * Checks status of a payment request via Vercel API / Edge Function / Direct
    */
   async checkPaymentStatus(orderCode) {
     if (!orderCode) return { success: false, status: 'PENDING', isPaid: false };
 
-    // 1. Uu tien kiểm tra qua Supabase Edge Function
+    // 1. Thử Vercel Serverless API
+    try {
+      const vercelRes = await fetch('/api/payos-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check_status', orderCode }),
+      });
+
+      if (vercelRes.ok) {
+        const vercelData = await vercelRes.json();
+        if (vercelData.success) {
+          return {
+            success: true,
+            status: vercelData.status,
+            isPaid: Boolean(vercelData.isPaid),
+            amount: vercelData.amount,
+            amountPaid: vercelData.amountPaid,
+          };
+        }
+      }
+    } catch (vErr) {}
+
+    // 2. Thử Supabase Edge Function
     const supabase = getSupabaseClient();
     if (supabase?.functions) {
       try {
@@ -137,12 +187,10 @@ export const PayOSService = {
             amountPaid: data.amountPaid,
           };
         }
-      } catch (err) {
-        console.warn('[PayOSService] Edge function check status error:', err);
-      }
+      } catch (err) {}
     }
 
-    // 2. Client fallback
+    // 3. Fallback direct client
     if (!PAYOS_CONFIG.clientId || !PAYOS_CONFIG.apiKey) {
       return { success: false, status: 'PENDING', isPaid: false };
     }
@@ -169,9 +217,7 @@ export const PayOSService = {
           };
         }
       }
-    } catch (error) {
-      console.warn(`[PayOSService] Client check status error:`, error);
-    }
+    } catch (error) {}
 
     return { success: false, status: 'PENDING', isPaid: false };
   },
