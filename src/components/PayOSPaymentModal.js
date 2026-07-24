@@ -189,6 +189,14 @@ function renderStep1Summary() {
 /**
  * STEP 2: PayOS VietQR Transfer Dialog with Live Polling
  */
+function getQrCodeImageUrl(qrCode) {
+  if (!qrCode) return '';
+  if (qrCode.startsWith('http://') || qrCode.startsWith('https://') || qrCode.startsWith('data:image/')) {
+    return qrCode;
+  }
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCode)}`;
+}
+
 function renderStep2QRTransfer() {
   const { payosInfo, amount } = activePaymentState;
   if (!payosInfo) {
@@ -197,8 +205,11 @@ function renderStep2QRTransfer() {
     return;
   }
 
+  const qrImageUrl = getQrCodeImageUrl(payosInfo.qrCode);
+
   Modal.open({
     title: `[Bước 2/3] Quét mã QR PayOS Chuyển khoản`,
+    className: 'modal-payos',
     body: `
       <div class="payos-modal-container">
         <div class="payos-stepper">
@@ -211,7 +222,7 @@ function renderStep2QRTransfer() {
 
         <div class="payos-qr-wrapper">
           <div class="payos-qr-box">
-            <img class="payos-qr-image" src="${escapeHtml(payosInfo.qrCode)}" alt="Mã QR PayOS VietQR" />
+            <img class="payos-qr-image" src="${escapeHtml(qrImageUrl)}" alt="Mã QR PayOS VietQR" />
             <div class="payos-qr-badge">PayOS VietQR Tự Động</div>
           </div>
 

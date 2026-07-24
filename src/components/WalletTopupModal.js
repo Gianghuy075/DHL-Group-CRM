@@ -154,20 +154,30 @@ function updateTopupPreview() {
   if (totEl) totEl.textContent = formatCurrency(amount + bonus);
 }
 
+function getQrCodeImageUrl(qrCode) {
+  if (!qrCode) return '';
+  if (qrCode.startsWith('http://') || qrCode.startsWith('https://') || qrCode.startsWith('data:image/')) {
+    return qrCode;
+  }
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCode)}`;
+}
+
 function renderTopupStep2QR() {
   const { payosInfo, selectedAmount, selectedBonus } = activeTopupState;
 
   const hasCheckoutUrl = Boolean(payosInfo.checkoutUrl && !payosInfo.isFallback);
   const accountNo = payosInfo.accountNo || '';
   const accountName = payosInfo.accountName || '';
+  const qrImageUrl = getQrCodeImageUrl(payosInfo.qrCode);
 
   Modal.open({
     title: 'Cổng Thanh Toán PayOS Tự Động',
+    className: 'modal-payos',
     body: `
       <div class="wallet-topup-container">
         <div class="payos-qr-wrapper">
           <div class="payos-qr-box">
-            <img class="payos-qr-image" src="${escapeHtml(payosInfo.qrCode)}" alt="Mã QR PayOS Tự Động" />
+            <img class="payos-qr-image" src="${escapeHtml(qrImageUrl)}" alt="Mã QR PayOS Tự Động" />
             <div class="payos-qr-badge">PayOS VietQR Tự Động</div>
           </div>
 

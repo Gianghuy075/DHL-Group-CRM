@@ -1895,27 +1895,35 @@ textarea {
   font-size: 24px;
 }
 
+.modal-payos {
+  width: min(680px, 94vw) !important;
+  max-width: 680px !important;
+}
+
 .payos-qr-wrapper {
-  display: grid;
-  grid-template-columns: 240px 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
-  align-items: start;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
 }
 
 .payos-qr-box {
+  flex: 0 0 210px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px;
+  padding: 14px;
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 .payos-qr-image {
-  width: 100%;
-  max-width: 200px;
-  height: auto;
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
   border-radius: 8px;
 }
 
@@ -1930,15 +1938,19 @@ textarea {
 }
 
 .payos-transfer-details {
+  flex: 1 1 320px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .detail-val-copy {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  word-break: break-all;
 }
 
 .btn-copy {
