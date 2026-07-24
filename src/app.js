@@ -74,14 +74,6 @@ async function initApp() {
 }
 
 function getRoleConfig(role) {
-  if (role === 'reviewer') {
-    return {
-      navSections: REVIEWER_NAV_SECTIONS,
-      allowedRoutes: new Set(['registration-requests', 'kiosks', 'kiosk-detail']),
-      defaultRoute: 'registration-requests',
-    };
-  }
-
   if (role === 'user') {
     return {
       navSections: USER_NAV_SECTIONS,
@@ -90,6 +82,7 @@ function getRoleConfig(role) {
     };
   }
 
+  // Admin (Bao gồm toàn bộ quyền Quản trị & Kiểm duyệt)
   return {
     navSections: ADMIN_NAV_SECTIONS,
     allowedRoutes: new Set(Object.keys(routes)),
