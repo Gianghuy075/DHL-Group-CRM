@@ -2,15 +2,15 @@ import { requireSupabaseClient, runQuery } from './BaseService.js';
 import { PayOSService } from './PayOSService.js';
 
 export const DEPOSIT_BONUS_TIERS = [
-  { amount: 500000, bonus: 50000, label: 'Nạp 500.000 đ', badge: '+50k Thưởng (10%)' },
-  { amount: 1000000, bonus: 150000, label: 'Nạp 1.000.000 đ', badge: '+150k Thưởng (15%)', recommended: true },
-  { amount: 2000000, bonus: 400000, label: 'Nạp 2.000.000 đ', badge: '+400k Thưởng (20%)' },
-  { amount: 5000000, bonus: 1200000, label: 'Nạp 5.000.000 đ', badge: '+1.2M Thưởng (24%)' },
+  { amount: 500000, bonus: 0, label: 'Nạp 500.000 đ' },
+  { amount: 1000000, bonus: 0, label: 'Nạp 1.000.000 đ', recommended: true },
+  { amount: 2000000, bonus: 0, label: 'Nạp 2.000.000 đ' },
+  { amount: 5000000, bonus: 0, label: 'Nạp 5.000.000 đ' },
 ];
 
 export const WalletService = {
   /**
-   * Get Customer's Wallet Balance and Bonus Balance
+   * Get Customer's Wallet Balance
    */
   async getWalletInfo(customerId) {
     if (!customerId) return { walletBalance: 0, bonusBalance: 0, totalAvailable: 0 };
@@ -22,18 +22,17 @@ export const WalletService = {
       const { data: customer } = await runQuery(
         supabase
           .from('customers')
-          .select('wallet_balance, bonus_balance')
+          .select('wallet_balance')
           .eq('id', customerId)
           .single(),
       );
 
       const walletBalance = Number(customer?.wallet_balance || 0);
-      const bonusBalance = Number(customer?.bonus_balance || 0);
 
       return {
         walletBalance,
-        bonusBalance,
-        totalAvailable: walletBalance + bonusBalance,
+        bonusBalance: 0,
+        totalAvailable: walletBalance,
       };
     } catch (error) {
       console.warn('[WalletService] Failed to load wallet info:', error);
@@ -65,18 +64,9 @@ export const WalletService = {
   },
 
   /**
-   * Calculate bonus for a given deposit amount
+   * Bonus balance removed - returns 0
    */
-  calculateBonus(amount) {
-    const numericAmount = Number(amount || 0);
-    const tier = DEPOSIT_BONUS_TIERS.find((t) => t.amount === numericAmount);
-    if (tier) return tier.bonus;
-
-    // Default tiered bonus for custom amount
-    if (numericAmount >= 5000000) return Math.floor(numericAmount * 0.24);
-    if (numericAmount >= 2000000) return Math.floor(numericAmount * 0.20);
-    if (numericAmount >= 1000000) return Math.floor(numericAmount * 0.15);
-    if (numericAmount >= 500000) return Math.floor(numericAmount * 0.10);
+  calculateBonus() {
     return 0;
   },
 
@@ -90,7 +80,6 @@ export const WalletService = {
       throw new Error('Số tiền nạp tối thiểu là 10.000 đ.');
     }
 
-    const bonusAmount = WalletService.calculateBonus(numericAmount);
     const orderCode = PayOSService.generateOrderCode();
     const description = `NAP VI ${orderCode}`;
 
@@ -109,7 +98,7 @@ export const WalletService = {
           customer_id: customerId,
           transaction_type: 'deposit',
           amount: numericAmount,
-          bonus_amount: bonusAmount,
+          bonus_amount: 0,
           order_code: orderCode,
           payment_method: 'payos',
           status: 'pending',
@@ -122,15 +111,15 @@ export const WalletService = {
 
     return {
       ...payosResult,
-      bonusAmount,
-      totalReceived: numericAmount + bonusAmount,
+      bonusAmount: 0,
+      totalReceived: numericAmount,
     };
   },
 
   /**
    * Confirms a pending deposit transaction & credits customer balance
    */
-  async confirmDeposit({ customerId, orderCode, amount, bonusAmount, description }) {
+  async confirmDeposit({ customerId, orderCode, amount, description }) {
     const supabase = requireSupabaseClient();
     if (!supabase) throw new Error('Chưa kết nối Supabase client.');
 
@@ -139,7 +128,7 @@ export const WalletService = {
       const { data, error } = await supabase.rpc('process_wallet_deposit', {
         p_customer_id: customerId,
         p_amount: Number(amount),
-        p_bonus_amount: Number(bonusAmount || 0),
+        p_bonus_amount: 0,
         p_order_code: Number(orderCode),
         p_description: description || `Nạp tiền qua PayOS ${orderCode}`,
       });
@@ -154,14 +143,12 @@ export const WalletService = {
     // Direct fallback table update
     const walletInfo = await WalletService.getWalletInfo(customerId);
     const newWalletBalance = walletInfo.walletBalance + Number(amount);
-    const newBonusBalance = walletInfo.bonusBalance + Number(bonusAmount || 0);
 
     await runQuery(
       supabase
         .from('customers')
         .update({
           wallet_balance: newWalletBalance,
-          bonus_balance: newBonusBalance,
         })
         .eq('id', customerId),
     );
@@ -177,87 +164,93 @@ export const WalletService = {
         customer_id: customerId,
         transaction_type: 'deposit',
         amount: Number(amount),
-        bonus_amount: Number(bonusAmount || 0),
+        bonus_amount: 0,
+        payment_method: 'payos',
         status: 'completed',
-        description: description || 'Nạp ví ảo qua PayOS',
+        description: description || 'Nạp ví ảo thành công',
       }]);
     }
 
-    return {
-      success: true,
-      wallet_balance: newWalletBalance,
-      bonus_balance: newBonusBalance,
-    };
+    return { success: true, newBalance: newWalletBalance };
   },
 
   /**
-   * Pay for service using Wallet Balance
+   * Deducts funds from customer wallet balance for payment/task
    */
   async payWithWallet({ customerId, amount, description }) {
-    if (!customerId) throw new Error('Khách hàng không hợp lệ.');
     const numericAmount = Number(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      throw new Error('Số tiền thanh toán không hợp lệ.');
+    if (!customerId || isNaN(numericAmount) || numericAmount <= 0) {
+      throw new Error('Thông tin thanh toán không hợp lệ.');
+    }
+
+    const walletInfo = await WalletService.getWalletInfo(customerId);
+    if (walletInfo.totalAvailable < numericAmount) {
+      throw new Error(`Số dư Ví Ảo không đủ (Số dư: ${walletInfo.totalAvailable.toLocaleString()} đ, Cần: ${numericAmount.toLocaleString()} đ). Vui lòng nạp thêm!`);
     }
 
     const supabase = requireSupabaseClient();
-    if (!supabase) throw new Error('Chưa kết nối Supabase.');
+    if (!supabase) throw new Error('Chưa kết nối Supabase client.');
 
-    // Try RPC function pay_via_wallet
-    try {
-      const { data, error } = await supabase.rpc('pay_via_wallet', {
-        p_customer_id: customerId,
-        p_amount: numericAmount,
-        p_description: description || 'Thanh toán dịch vụ bằng Ví Ảo',
-      });
+    // Deduct from wallet_balance
+    const newWalletBalance = walletInfo.walletBalance - numericAmount;
 
-      if (!error && data?.success) {
-        return data;
-      }
-    } catch (err) {
-      console.warn('[WalletService] RPC pay_via_wallet error, running direct fallback:', err);
+    await runQuery(
+      supabase
+        .from('customers')
+        .update({
+          wallet_balance: Math.max(0, newWalletBalance),
+        })
+        .eq('id', customerId),
+    );
+
+    // Record payment transaction
+    await supabase.from('wallet_transactions').insert([{
+      customer_id: customerId,
+      transaction_type: 'payment',
+      amount: -numericAmount,
+      bonus_amount: 0,
+      payment_method: 'wallet',
+      status: 'completed',
+      description: description || 'Thanh toán qua Ví Ảo KioskHub',
+    }]);
+
+    return { success: true, newBalance: newWalletBalance };
+  },
+
+  /**
+   * Adds reward funds to customer wallet when completing tasks
+   */
+  async rewardWorkerWallet({ workerId, amount, description }) {
+    const numericAmount = Number(amount);
+    if (!workerId || isNaN(numericAmount) || numericAmount <= 0) {
+      throw new Error('Thông tin trả thưởng không hợp lệ.');
     }
 
-    // Fallback direct check & deduction
-    const { walletBalance, bonusBalance, totalAvailable } = await WalletService.getWalletInfo(customerId);
-    if (totalAvailable < numericAmount) {
-      throw new Error(`Số dư ví không đủ (Hiện có: ${totalAvailable.toLocaleString('vi-VN')} đ, Cần: ${numericAmount.toLocaleString('vi-VN')} đ). Vui lòng nạp thêm tiền vào ví.`);
-    }
+    const walletInfo = await WalletService.getWalletInfo(workerId);
+    const supabase = requireSupabaseClient();
+    if (!supabase) throw new Error('Chưa kết nối Supabase client.');
 
-    let deductMain = 0;
-    let deductBonus = 0;
-    if (walletBalance >= numericAmount) {
-      deductMain = numericAmount;
-    } else {
-      deductMain = walletBalance;
-      deductBonus = numericAmount - walletBalance;
-    }
-
-    const newWalletBalance = walletBalance - deductMain;
-    const newBonusBalance = bonusBalance - deductBonus;
+    const newWalletBalance = walletInfo.walletBalance + numericAmount;
 
     await runQuery(
       supabase
         .from('customers')
         .update({
           wallet_balance: newWalletBalance,
-          bonus_balance: newBonusBalance,
         })
-        .eq('id', customerId),
+        .eq('id', workerId),
     );
 
     await supabase.from('wallet_transactions').insert([{
-      customer_id: customerId,
-      transaction_type: 'spending',
-      amount: -numericAmount,
+      customer_id: workerId,
+      transaction_type: 'reward',
+      amount: numericAmount,
+      bonus_amount: 0,
+      payment_method: 'wallet',
       status: 'completed',
-      description: description || 'Thanh toán bằng Ví Ảo',
+      description: description || 'Nhận thưởng nhiệm vụ tương tác',
     }]);
 
-    return {
-      success: true,
-      remaining_wallet_balance: newWalletBalance,
-      remaining_bonus_balance: newBonusBalance,
-    };
+    return { success: true, newBalance: newWalletBalance };
   },
 };

@@ -49,18 +49,16 @@ function renderTopupStep1() {
       <div class="wallet-topup-container">
         <div class="topup-header-banner">
           <div>
-            <div class="topup-subtitle">Nạp tiền tích điểm - Nhận ngay thưởng thêm tới 24% số tiền nạp</div>
+            <div class="topup-subtitle">Nạp tiền vào Ví Ảo KioskHub</div>
             <div class="topup-user-name">Khách hàng: <strong>${escapeHtml(customerName || '—')}</strong></div>
           </div>
         </div>
 
         <div class="topup-tiers-grid">
           ${DEPOSIT_BONUS_TIERS.map((tier) => `
-            <div class="topup-tier-card ${tier.amount === selectedAmount ? 'selected' : ''} ${tier.recommended ? 'recommended' : ''}" data-tier-amount="${tier.amount}" data-tier-bonus="${tier.bonus}">
-              ${tier.recommended ? '<div class="tier-ribbon">Phổ biến nhất</div>' : ''}
+            <div class="topup-tier-card ${tier.amount === selectedAmount ? 'selected' : ''} ${tier.recommended ? 'recommended' : ''}" data-tier-amount="${tier.amount}" data-tier-bonus="0">
+              ${tier.recommended ? '<div class="tier-ribbon">Phổ biến</div>' : ''}
               <div class="tier-amount">${formatCurrency(tier.amount)}</div>
-              <div class="tier-badge">${tier.badge}</div>
-              <div class="tier-total">Nhận tổng: <strong>${formatCurrency(tier.amount + tier.bonus)}</strong></div>
             </div>
           `).join('')}
         </div>
@@ -73,9 +71,7 @@ function renderTopupStep1() {
         </div>
 
         <div class="topup-summary-bar" id="topup-summary-preview">
-          <div>Số tiền nạp: <strong id="topup-preview-deposit">${formatCurrency(selectedAmount)}</strong></div>
-          <div>Thưởng thêm: <strong class="text-bonus" id="topup-preview-bonus">+${formatCurrency(selectedBonus)}</strong></div>
-          <div class="total">Tổng cộng vào Ví: <strong class="text-gold" id="topup-preview-total">${formatCurrency(selectedAmount + selectedBonus)}</strong></div>
+          <div class="total">Số tiền nạp vào Ví: <strong class="text-gold" id="topup-preview-total">${formatCurrency(selectedAmount)}</strong></div>
         </div>
 
         <div class="modal-actions">
@@ -144,14 +140,9 @@ function renderTopupStep1() {
 
 function updateTopupPreview() {
   const amount = activeTopupState.selectedAmount;
-  const bonus = activeTopupState.selectedBonus;
-  const depEl = document.getElementById('topup-preview-deposit');
-  const bonEl = document.getElementById('topup-preview-bonus');
   const totEl = document.getElementById('topup-preview-total');
 
-  if (depEl) depEl.textContent = formatCurrency(amount);
-  if (bonEl) bonEl.textContent = `+${formatCurrency(bonus)}`;
-  if (totEl) totEl.textContent = formatCurrency(amount + bonus);
+  if (totEl) totEl.textContent = formatCurrency(amount);
 }
 
 function getQrCodeImageUrl(qrCode) {
@@ -163,7 +154,7 @@ function getQrCodeImageUrl(qrCode) {
 }
 
 function renderTopupStep2QR() {
-  const { payosInfo, selectedAmount, selectedBonus } = activeTopupState;
+  const { payosInfo, selectedAmount } = activeTopupState;
 
   const hasCheckoutUrl = Boolean(payosInfo.checkoutUrl && !payosInfo.isFallback);
   const accountNo = payosInfo.accountNo || '';
@@ -206,10 +197,6 @@ function renderTopupStep2QR() {
                 <span class="detail-val strong-cell text-primary-gold">${formatCurrency(selectedAmount)}</span>
                 <button class="btn-copy" type="button" data-copy="${selectedAmount}">Sao chép</button>
               </div>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Tiền thưởng ưu đãi</span>
-              <span class="detail-val text-bonus">+${formatCurrency(selectedBonus)}</span>
             </div>
             <div class="detail-row highlight-row">
               <span class="detail-label">Nội dung nạp tiền</span>

@@ -26,17 +26,9 @@ export function WalletCard({ customer, walletInfo, onUpdated } = {}) {
       </div>
 
       <div class="wallet-balances-grid">
-        <div class="balance-item primary">
-          <span class="balance-label">Số dư chính</span>
+        <div class="balance-item primary full-width">
+          <span class="balance-label">Số dư Ví Ảo</span>
           <span class="balance-value text-gold">${formatCurrency(walletBalance)}</span>
-        </div>
-        <div class="balance-item bonus">
-          <span class="balance-label">Số dư thưởng (Ưu đãi)</span>
-          <span class="balance-value text-bonus">+${formatCurrency(bonusBalance)}</span>
-        </div>
-        <div class="balance-item total">
-          <span class="balance-label">Tổng số dư khả dụng</span>
-          <span class="balance-value strong-cell">${formatCurrency(totalAvailable)}</span>
         </div>
       </div>
     </div>
@@ -97,7 +89,6 @@ async function openWalletHistoryModal(customerId, customerName) {
                 <th>Thời gian</th>
                 <th>Loại GD</th>
                 <th>Số tiền</th>
-                <th>Tiền thưởng</th>
                 <th>Trạng thái</th>
                 <th>Mô tả</th>
               </tr>
@@ -110,7 +101,6 @@ async function openWalletHistoryModal(customerId, customerName) {
                   <td class="strong-cell ${Number(tx.amount) >= 0 ? 'text-green' : 'text-danger'}">
                     ${Number(tx.amount) >= 0 ? '+' : ''}${formatCurrency(tx.amount)}
                   </td>
-                  <td>${Number(tx.bonus_amount) > 0 ? `<span class="text-bonus">+${formatCurrency(tx.bonus_amount)}</span>` : '—'}</td>
                   <td>${renderTxStatus(tx.status)}</td>
                   <td>${escapeHtml(tx.description || '—')}</td>
                 </tr>

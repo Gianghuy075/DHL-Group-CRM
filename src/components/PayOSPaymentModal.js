@@ -130,7 +130,6 @@ function renderStep1Summary() {
                 <strong>Thanh toán bằng Ví Ảo (Ví web)</strong>
                 <div class="muted-text">
                   Số dư khả dụng: <strong>${formatCurrency(walletInfo.totalAvailable)}</strong>
-                  ${walletInfo.bonusBalance > 0 ? ` <span class="badge-bonus">(Gồm ${formatCurrency(walletInfo.bonusBalance)} thưởng)</span>` : ''}
                 </div>
               </div>
             </div>
