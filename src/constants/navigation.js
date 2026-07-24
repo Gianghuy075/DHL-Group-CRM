@@ -12,7 +12,7 @@ export const PAGE_TITLES = {
   settings: 'Cài đặt hệ thống',
   register: 'Đăng ký Kiosk',
   'registration-requests': 'Duyệt đơn đăng ký',
-  staff: 'Quản lý Nhân viên',
+  staff: 'Quản lý Tài khoản',
   reports: 'Báo cáo Doanh thu',
 };
 
@@ -38,7 +38,7 @@ export const ADMIN_NAV_SECTIONS = [
     label: 'Duyệt & Phân quyền',
     items: [
       { route: 'registration-requests', label: 'Duyệt đăng ký', icon: '✅' },
-      { route: 'staff', label: 'Nhân viên', icon: '🛡️' },
+      { route: 'staff', label: 'Quản lý Tài khoản', icon: '🛡️' },
     ],
   },
   {
@@ -60,17 +60,6 @@ export const USER_NAV_SECTIONS = [
       { route: 'facebook-tasks', label: 'Nhiệm vụ Chéo FB & Ví Ảo', icon: '⚡' },
       { route: 'kiosks', label: 'Kiosk của tôi', icon: '🏪' },
       { route: 'payments', label: 'Lịch sử Thanh toán', icon: '💰' },
-    ],
-  },
-];
-
-// Menu Dành cho Kiểm duyệt viên (Reviewer)
-export const REVIEWER_NAV_SECTIONS = [
-  {
-    label: 'Kiểm duyệt',
-    items: [
-      { route: 'registration-requests', label: 'Duyệt đăng ký', icon: '✅' },
-      { route: 'kiosks', label: 'Danh sách Kiosk', icon: '🏪' },
     ],
   },
 ];

@@ -2,7 +2,11 @@ import { escapeHtml } from '../utils/html.js';
 
 export function AppLayout({ navSections, user }) {
   const displayName = user?.display_name || user?.username || 'Người dùng';
-  const roleLabel = user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên kiểm duyệt';
+  const ROLE_LABELS = {
+    admin: 'Quản trị viên',
+    user: 'Khách hàng Kiosk',
+  };
+  const roleLabel = ROLE_LABELS[user?.role] || 'Khách hàng Kiosk';
   const initial = displayName.trim().charAt(0).toUpperCase() || 'U';
   return `
     <div class="app-shell">

@@ -15,6 +15,13 @@ export const AuthService = {
     return data.session || null;
   },
 
+  async getCurrentSession() {
+    const client = requireClient();
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    return data.session || null;
+  },
+
   async signIn(email, password) {
     const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
     if (error) throw error;
