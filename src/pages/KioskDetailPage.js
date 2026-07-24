@@ -4,6 +4,7 @@ import { openRenewKioskForm } from '../components/RenewKioskForm.js';
 import { FACEBOOK_GROUP_MEMBER_BASE_URL, FACEBOOK_PROFILE_BASE_URL } from '../constants/facebook.js';
 import { KioskService } from '../services/KioskService.js';
 import { PaymentService } from '../services/PaymentService.js';
+import { AuthService } from '../services/AuthService.js';
 import { formatCurrency } from '../utils/currency.js';
 import { formatDate } from '../utils/date.js';
 import { escapeHtml } from '../utils/html.js';
@@ -38,10 +39,18 @@ KioskDetailPage.afterRender = async function afterRenderKioskDetail({ params }) 
   renderKioskDetailState('Đang tải Kiosk', 'Đang đọc dữ liệu từ Supabase.');
 
   try {
+    const session = await AuthService.getCurrentSession();
+    const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+
     const [{ data: kiosk }, { data: payments }] = await Promise.all([
       KioskService.getById(id),
       PaymentService.listByKiosk(id),
     ]);
+
+    if (profile?.role === 'user' && kiosk?.customer_id !== session?.user?.id) {
+      renderKioskDetailState('Không có quyền truy cập', 'Bạn chỉ được phép xem chi tiết Kiosk dịch vụ của chính mình.');
+      return;
+    }
 
     renderKioskDetail(kiosk, payments || []);
   } catch (error) {

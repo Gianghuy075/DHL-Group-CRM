@@ -106,6 +106,17 @@ export const CustomerService = {
   async setStatus(id, status) {
     return CustomerService.update(id, { status });
   },
+
+  async upsert(customer) {
+    const supabase = requireSupabaseClient();
+    return runQuery(
+      supabase
+        .from('customers')
+        .upsert(customer)
+        .select()
+        .single(),
+    );
+  },
 };
 
 async function findCustomerIdsByKioskState(supabase, kioskState) {

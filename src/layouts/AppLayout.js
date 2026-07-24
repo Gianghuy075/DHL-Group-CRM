@@ -8,6 +8,7 @@ export function AppLayout({ navSections, user }) {
   };
   const roleLabel = ROLE_LABELS[user?.role] || 'Khách hàng Kiosk';
   const initial = displayName.trim().charAt(0).toUpperCase() || 'U';
+
   return `
     <div class="app-shell">
       <aside class="sidebar" data-sidebar>
@@ -70,6 +71,27 @@ function renderNavSection(section) {
 }
 
 function renderNavItem(item) {
+  if (item.children && item.children.length > 0) {
+    return `
+      <div class="nav-item-group expanded" data-nav-group="${item.route}">
+        <div class="nav-group-header" data-nav-toggle="${item.route}">
+          <div class="nav-group-title-wrapper">
+            <span class="nav-icon" aria-hidden="true">${item.icon}</span>
+            <span class="nav-group-title">${item.label}</span>
+          </div>
+          <span class="nav-chevron font-emoji">⌃</span>
+        </div>
+        <div class="nav-sub-menu">
+          ${item.children.map((child) => `
+            <a href="#/${child.route}?type=${child.taskType}" class="nav-sub-item" data-nav-route="${child.route}" data-nav-type="${child.taskType}">
+              <span>${child.label}</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   return `
     <a href="#/${item.route}" class="nav-item" data-nav-route="${item.route}">
       <span class="nav-icon" aria-hidden="true">${item.icon}</span>
@@ -77,3 +99,14 @@ function renderNavItem(item) {
     </a>
   `;
 }
+
+// Attach event listener for collapsible sidebar sub-menus
+document.addEventListener('click', (event) => {
+  const toggleBtn = event.target.closest('[data-nav-toggle]');
+  if (toggleBtn) {
+    const group = toggleBtn.closest('.nav-item-group');
+    if (group) {
+      group.classList.toggle('expanded');
+    }
+  }
+});

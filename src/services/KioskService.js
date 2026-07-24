@@ -9,6 +9,7 @@ export const KioskService = {
     searchTerm = '',
     status = '',
     businessTypeId = '',
+    customerId = '',
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
@@ -17,6 +18,10 @@ export const KioskService = {
     let query = supabase
       .from('kiosks')
       .select(KIOSK_SELECT, { count: 'exact' });
+
+    if (customerId) {
+      query = query.eq('customer_id', customerId);
+    }
 
     if (normalizedSearch) {
       const businessTypeIds = await findBusinessTypeIds(supabase, normalizedSearch);

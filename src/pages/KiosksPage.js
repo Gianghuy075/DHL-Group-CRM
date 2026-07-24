@@ -181,10 +181,15 @@ async function loadKiosks() {
   setLoadingState();
 
   try {
+    const session = await AuthService.getCurrentSession();
+    const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+    const customerId = profile?.role === 'user' ? session?.user?.id : undefined;
+
     const { data, count } = await KioskService.list({
       searchTerm: state.searchTerm,
       status: state.status,
       businessTypeId: state.businessTypeId,
+      customerId,
       pagination: { page: state.page, pageSize: state.pageSize },
     });
 

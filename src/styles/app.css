@@ -186,6 +186,87 @@ textarea {
   text-align: center;
 }
 
+/* ==========================================================================
+   SIDEBAR COLLAPSIBLE SUB-MENU STYLES
+   ========================================================================== */
+.nav-item-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: #f1f5f9;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-group-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.nav-group-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-chevron {
+  font-size: 14px;
+  color: #94a3b8;
+  transition: transform 0.25s ease;
+  transform: rotate(180deg);
+}
+
+.nav-item-group.expanded .nav-chevron {
+  transform: rotate(0deg);
+}
+
+.nav-sub-menu {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 36px;
+  padding-top: 4px;
+  padding-bottom: 6px;
+}
+
+.nav-item-group.expanded .nav-sub-menu {
+  display: flex;
+}
+
+.nav-sub-item {
+  display: block;
+  padding: 8px 12px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+}
+
+.nav-sub-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-sub-item.active {
+  color: #fbbf24;
+  font-weight: 700;
+  background: rgba(251, 191, 36, 0.12);
+}
+
 .sidebar-footer {
   display: flex;
   align-items: center;
@@ -2593,6 +2674,279 @@ textarea {
 
 .card-action-bar {
   margin-top: 12px;
+}
+
+/* ==========================================================================
+   ACCOUNT PAGE & FACEBOOK VERIFICATION TAB STYLES
+   ========================================================================== */
+.account-page-container {
+  width: 100%;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.account-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+}
+
+.account-user-name {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.account-user-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge-role {
+  padding: 3px 10px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-status.active {
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  font-size: 13.5px;
+}
+
+.detail-item .detail-label {
+  color: #94a3b8;
+}
+
+.detail-item .detail-val {
+  color: #f1f5f9;
+}
+
+.badge-verified-success {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.badge-verified-warning {
+  color: #facc15;
+  font-weight: 600;
+}
+
+.account-wallet-banner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wallet-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.wallet-banner-content .wallet-icon {
+  font-size: 28px;
+}
+
+.wallet-banner-title {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.wallet-banner-amount {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fbbf24;
+  margin: 2px 0;
+}
+
+.wallet-banner-sub {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.card-title-bar {
+  margin-bottom: 18px;
+}
+
+.card-title-bar h3 {
+  margin: 0 0 4px 0;
+  font-size: 17px;
+  color: #ffffff;
+}
+
+.card-sub-title {
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+.fb-verified-box {
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.fb-verified-box.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.fb-verified-box.warning {
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+.verified-header-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.verified-header-bar .icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.verified-header-bar .title {
+  display: block;
+  font-size: 15px;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.verified-header-bar .sub {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.verified-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.verified-details-grid .grid-item {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.verified-details-grid .grid-item.full-width {
+  grid-column: span 2;
+}
+
+.verified-details-grid .lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.verified-details-grid .val {
+  font-size: 13.5px;
+  color: #f1f5f9;
+}
+
+.verify-requirements-list {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.verify-requirements-list .req-title {
+  font-weight: 600;
+  color: #facc15;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.verify-requirements-list ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.id-preview-val {
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fbbf24;
+  font-size: 13px;
 }
 
 

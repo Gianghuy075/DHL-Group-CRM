@@ -56,7 +56,12 @@ export function FacebookTasksPage() {
   `;
 }
 
-FacebookTasksPage.afterRender = async function afterRenderFacebookTasks() {
+FacebookTasksPage.afterRender = async function afterRenderFacebookTasks({ params } = {}) {
+  const typeFilter = params?.get('type');
+  if (typeFilter) {
+    state.selectedTaskTypeFilter = typeFilter;
+    state.createTaskForm.taskType = typeFilter;
+  }
   bindTabEvents();
   await loadUserData();
   renderTabContent();

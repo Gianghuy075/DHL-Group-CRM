@@ -51,6 +51,7 @@ export const PaymentService = {
     status = '',
     paymentMethod = '',
     businessTypeId = '',
+    customerId = '',
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
@@ -68,6 +69,7 @@ export const PaymentService = {
       status,
       paymentMethod,
       businessTypeKioskIds,
+      customerId,
     });
 
     return runQuery(applyPagination(applySort(query, sort), pagination));
@@ -78,6 +80,7 @@ export const PaymentService = {
     status = '',
     paymentMethod = '',
     businessTypeId = '',
+    customerId = '',
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
@@ -91,6 +94,7 @@ export const PaymentService = {
       status,
       paymentMethod,
       businessTypeKioskIds,
+      customerId,
     };
 
     let listQuery = supabase
@@ -371,7 +375,9 @@ function applyPaymentFilters(query, {
   status = '',
   paymentMethod = '',
   businessTypeKioskIds = null,
+  customerId = '',
 }) {
+  if (customerId) query = query.eq('customer_id', customerId);
   if (status) query = query.eq('payment_status', status);
   if (paymentMethod) query = query.eq('payment_method', paymentMethod);
   if (Array.isArray(businessTypeKioskIds)) {

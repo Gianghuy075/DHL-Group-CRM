@@ -23,6 +23,7 @@ import { LoginPage } from './pages/LoginPage.js';
 import { RegistrationRequestsPage } from './pages/RegistrationRequestsPage.js';
 import { StaffPage } from './pages/StaffPage.js';
 import { FacebookTasksPage } from './pages/FacebookTasksPage.js';
+import { AccountPage } from './pages/AccountPage.js';
 
 const routes = {
   dashboard: DashboardPage,
@@ -40,6 +41,7 @@ const routes = {
   reports: ReportsPage,
   'registration-requests': RegistrationRequestsPage,
   staff: StaffPage,
+  profile: AccountPage,
 };
 
 async function initApp() {
@@ -77,7 +79,7 @@ function getRoleConfig(role) {
   if (role === 'user') {
     return {
       navSections: USER_NAV_SECTIONS,
-      allowedRoutes: new Set(['facebook-tasks', 'kiosks', 'kiosk-detail', 'payments']),
+      allowedRoutes: new Set(['facebook-tasks', 'kiosks', 'kiosk-detail', 'payments', 'profile']),
       defaultRoute: 'facebook-tasks',
     };
   }
@@ -184,13 +186,25 @@ function getRouteName() {
 }
 
 function setActiveNavigation(route) {
+  const raw = window.location.hash.replace(/^#\/?/, '');
+  const queryString = raw.includes('?') ? raw.split('?')[1] : '';
+  const params = new URLSearchParams(queryString);
+  const taskType = params.get('type') || '';
+
   const activeRoute = {
     'customer-detail': 'customers',
     'kiosk-detail': 'kiosks',
   }[route] || route;
 
   document.querySelectorAll('[data-nav-route]').forEach((link) => {
-    const active = link.dataset.navRoute === activeRoute;
+    const linkRoute = link.dataset.navRoute;
+    const linkType = link.dataset.navType || '';
+
+    let active = linkRoute === activeRoute;
+    if (linkRoute === 'facebook-tasks' && linkType) {
+      active = linkRoute === activeRoute && linkType === taskType;
+    }
+
     link.classList.toggle('active', active);
     if (active) {
       link.setAttribute('aria-current', 'page');

@@ -217,10 +217,15 @@ async function loadPayments() {
   setLoadingState();
 
   try {
+    const session = await AuthService.getCurrentSession();
+    const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+    const customerId = profile?.role === 'user' ? session?.user?.id : undefined;
+
     const filters = {
       searchTerm: state.searchTerm,
       status: state.status,
       businessTypeId: state.businessTypeId,
+      customerId,
     };
     const { data, count, summary } = await PaymentService.listWithSummary({
       ...filters,
