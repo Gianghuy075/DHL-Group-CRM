@@ -24,9 +24,9 @@ const state = {
 export function AccountPage() {
   return `
     ${PageHeader({
-      title: 'Tài khoản & Xác thực Facebook',
-      description: 'Quản lý thông tin tài khoản Kiosk cá nhân và xác thực tài khoản Facebook qua Graph API.',
-    })}
+    title: 'Tài khoản & Xác thực Facebook',
+    description: 'Quản lý thông tin tài khoản Kiosk cá nhân và xác thực tài khoản Facebook qua Graph API.',
+  })}
 
     <div class="account-page-container">
       <div id="account-page-content">
@@ -146,7 +146,7 @@ function renderAccountContent() {
               `}
             </div>
           </div>
-          <button class="btn-primary" type="button" id="account-topup-btn">💳 Nạp Ví PayOS Ngay</button>
+          <button class="btn-primary" type="button" id="account-topup-btn">💳 Nạp Ví Ngay</button>
         </div>
       </div>
 
@@ -338,7 +338,7 @@ async function handleFacebookVerification() {
     await CustomerService.upsert(updatedPayload);
 
     Toast.show('🎉 Xác thực Facebook thành công và đã lưu vĩnh viễn vào CSDL! Bạn đã đủ điều kiện sử dụng dịch vụ.');
-    
+
     await loadAccountData();
     renderAccountContent();
 

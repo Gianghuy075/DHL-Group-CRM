@@ -30,9 +30,9 @@ export function RegisterPage() {
 
   return `
     ${PageHeader({
-      title: 'Đăng ký trực tuyến',
-      description: 'Đăng ký Kiosk và thanh toán bằng chuyển khoản VietQR.',
-    })}
+    title: 'Đăng ký trực tuyến',
+    description: 'Đăng ký Kiosk và thanh toán bằng chuyển khoản VietQR.',
+  })}
     <section class="form-card registration-card">
       <form id="public-registration-form" novalidate>
         <div class="registration-stepper">
@@ -140,7 +140,7 @@ export function RegisterPage() {
           </div>
           <div class="payos-notice-box">
             <span>💳</span>
-            <div>Bấm <strong>Thanh toán PayOS & Kích hoạt</strong> để mở Dialog quét mã QR VietQR PayOS hoặc dùng Ví Ảo web để kích hoạt tự động.</div>
+            <div>Bấm <strong>Thanh toán & Kích hoạt</strong> để mở Dialog thanh toán hoặc dùng Ví để kích hoạt tự động.</div>
           </div>
         </div>
 

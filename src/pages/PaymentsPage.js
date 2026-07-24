@@ -51,11 +51,11 @@ const state = {
 export function PaymentsPage() {
   return `
     ${PageHeader({
-      title: 'Duyệt & Quản lý Thanh toán',
-      description: 'Quản lý, đối soát và phê duyệt các giao dịch thanh toán Kiosk của khách hàng.',
-    })}
+    title: 'Duyệt & Quản lý Thanh toán',
+    description: 'Quản lý, đối soát và phê duyệt các giao dịch thanh toán Kiosk của khách hàng.',
+  })}
     ${Toolbar({
-      children: `
+    children: `
         <input
           type="search"
           id="payment-search"
@@ -72,7 +72,7 @@ export function PaymentsPage() {
           <option value="">Tất cả loại hình KD</option>
         </select>
       `,
-    })}
+  })}
     <div class="payments-summary">
       ${StatCard({ tone: 'green', icon: '💰', value: '<span id="payments-total-revenue">—</span>', label: 'Tổng thu' })}
       ${StatCard({ tone: 'blue', icon: '📅', value: '<span id="payments-month-revenue">—</span>', label: 'Tháng này' })}
@@ -340,7 +340,7 @@ function openPaymentApproval(payment) {
     months: payment.months,
     onSuccess: async () => {
       await PaymentService.confirm(payment.id);
-      Toast.show('Đã xác nhận thanh toán thành công qua PayOS / Ví Ảo!');
+      Toast.show('Đã xác nhận thanh toán thành công!');
       await loadPayments();
     },
   });

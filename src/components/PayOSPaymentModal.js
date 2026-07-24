@@ -20,8 +20,8 @@ export const PayOSPaymentModal = {
     customerName = '',
     kioskName = '',
     months = 1,
-    onSuccess = async () => {},
-    onCancel = () => {},
+    onSuccess = async () => { },
+    onCancel = () => { },
   }) {
     this.stopPolling();
 
@@ -137,7 +137,7 @@ function renderStep1Summary() {
             ${hasWallet ? `
               <button class="btn-secondary compact" type="button" id="payos-pay-via-wallet-btn">Dùng Ví ảo thanh toán ngay</button>
             ` : `
-              <div class="wallet-warning">Số dư ví không đủ (${formatCurrency(walletInfo.totalAvailable)} < ${formatCurrency(amount)}). Vui lòng chọn thanh toán qua QR PayOS.</div>
+              <div class="wallet-warning">Số dư ví không đủ (${formatCurrency(walletInfo.totalAvailable)} < ${formatCurrency(amount)}). Vui lòng chọn thanh toán qua QR.</div>
             `}
           </div>
         ` : ''}
@@ -145,7 +145,7 @@ function renderStep1Summary() {
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="payos-cancel-btn">Hủy</button>
           <button class="btn-primary" type="button" id="payos-goto-step2-btn">
-            Tạo mã QR PayOS Chuyển khoản ➔
+            Tạo mã QR Chuyển khoản ➔
           </button>
         </div>
       </div>
@@ -163,7 +163,7 @@ function renderStep1Summary() {
     const btn = document.getElementById('payos-goto-step2-btn');
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Đang tạo mã QR PayOS...';
+      btn.textContent = 'Đang tạo mã QR ...';
     }
 
     try {
@@ -177,10 +177,10 @@ function renderStep1Summary() {
       activePaymentState.step = 2;
       renderCurrentStep();
     } catch (err) {
-      Toast.show(err?.message || 'Không thể tạo liên kết PayOS. Vui lòng thử lại.');
+      Toast.show(err?.message || 'Không thể tạo liên kết thanh toán. Vui lòng thử lại.');
       if (btn) {
         btn.disabled = false;
-        btn.textContent = 'Tạo mã QR PayOS Chuyển khoản ➔';
+        btn.textContent = 'Tạo mã QR Chuyển khoản ➔';
       }
     }
   });
@@ -208,7 +208,7 @@ function renderStep2QRTransfer() {
   const qrImageUrl = getQrCodeImageUrl(payosInfo.qrCode);
 
   Modal.open({
-    title: `[Bước 2/3] Quét mã QR PayOS Chuyển khoản`,
+    title: `[Bước 2/3] Quét mã QR Chuyển khoản`,
     className: 'modal-payos',
     body: `
       <div class="payos-modal-container">
@@ -222,18 +222,11 @@ function renderStep2QRTransfer() {
 
         <div class="payos-qr-wrapper">
           <div class="payos-qr-box">
-            <img class="payos-qr-image" src="${escapeHtml(qrImageUrl)}" alt="Mã QR PayOS VietQR" />
-            <div class="payos-qr-badge">PayOS VietQR Tự Động</div>
+            <img class="payos-qr-image" src="${escapeHtml(qrImageUrl)}" alt="Mã QR Chuyển khoản" />
+            <div class="payos-qr-badge">Quét QR để thanh toán tự động</div>
           </div>
 
           <div class="payos-transfer-details">
-            ${payosInfo.checkoutUrl ? `
-              <div style="margin-bottom: 12px; text-align: center;">
-                <a href="${escapeHtml(payosInfo.checkoutUrl)}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block; padding: 10px 18px; text-decoration:none; width: 100%;">
-                  🔗 Mở Trang Thanh Toán PayOS Tự Động ➔
-                </a>
-              </div>
-            ` : ''}
             ${payosInfo.bankName ? `
               <div class="detail-row">
                 <span class="detail-label">Ngân hàng</span>
@@ -273,12 +266,12 @@ function renderStep2QRTransfer() {
         </div>
 
         <div class="payos-polling-status" id="payos-polling-indicator">
-          <span class="spinner-small"></span> Đang kết nối PayOS API & lắng nghe giao dịch chuyển khoản...
+          <span class="spinner-small"></span> Đang chờ thanh toán...
         </div>
 
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="payos-step2-back-btn">Quay lại</button>
-          <button class="btn-primary" type="button" id="payos-step2-verify-btn">🔄 Đối soát PayOS ➔</button>
+          <button class="btn-primary" type="button" id="payos-step2-verify-btn">🔄 Đối soát ➔</button>
         </div>
       </div>
     `,
@@ -331,7 +324,7 @@ function renderStep2QRTransfer() {
  */
 async function renderStep3Verification() {
   Modal.open({
-    title: `[Bước 3/3] Xác thực Thanh toán PayOS`,
+    title: `[Bước 3/3] Xác thực Thanh toán`,
     body: `
       <div class="payos-modal-container">
         <div class="payos-stepper">
@@ -344,7 +337,7 @@ async function renderStep3Verification() {
 
         <div id="payos-verification-card" class="payos-verification-card">
           <div class="spinner-large"></div>
-          <div class="verifying-text">Đang đối soát giao dịch với ngân hàng qua PayOS...</div>
+          <div class="verifying-text">Đang đối soát giao dịch với ngân hàng...</div>
         </div>
 
         <div class="modal-actions" id="payos-step3-actions">
@@ -377,7 +370,7 @@ async function runVerificationCheck() {
       <div class="status-result-box success">
         <div class="status-icon">🎉</div>
         <div class="status-title">Thanh toán Thành Công!</div>
-        <div class="status-desc">Hệ thống PayOS đã xác nhận nhận đủ <strong>${formatCurrency(activePaymentState.amount)}</strong>.</div>
+        <div class="status-desc">Hệ thống đã xác nhận nhận đủ <strong>${formatCurrency(activePaymentState.amount)}</strong>.</div>
         <div class="status-meta">
           <span>Mã đơn hàng: <strong>${payosInfo?.orderCode || '—'}</strong></span>
           <span>Nội dung: <strong>${escapeHtml(activePaymentState.description)}</strong></span>

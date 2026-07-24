@@ -134,9 +134,9 @@ async function openWalletHistoryModal(customerId, customerName) {
 function renderTxType(type) {
   switch (type) {
     case 'deposit':
-      return '<span class="badge badge-completed">Nạp tiền PayOS</span>';
+      return '<span class="badge badge-completed">Nạp tiền</span>';
     case 'spending':
-      return '<span class="badge badge-pending">Thanh toán DV</span>';
+      return '<span class="badge badge-pending">Thanh toán</span>';
     case 'bonus':
       return '<span class="badge badge-active">Tiền thưởng</span>';
     default:

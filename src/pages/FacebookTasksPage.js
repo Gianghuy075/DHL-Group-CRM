@@ -30,9 +30,9 @@ const state = {
 export function FacebookTasksPage() {
   return `
     ${PageHeader({
-      title: 'Hệ thống Tương tác Chéo Facebook (Ví Ảo)',
-      description: 'Đăng & Làm nhiệm vụ Like, Share, Comment, Follow. Tự động kiểm tra qua Facebook Graph API & Trả thưởng vào Ví Ảo.',
-    })}
+    title: 'Hệ thống Tương tác Chéo Facebook (Ví Ảo)',
+    description: 'Đăng & Làm nhiệm vụ Like, Share, Comment, Follow. Tự động kiểm tra qua Facebook Graph API & Trả thưởng vào Ví Ảo.',
+  })}
 
     <div class="tasks-page-container">
       <div id="tasks-wallet-banner-outlet"></div>
@@ -132,7 +132,7 @@ function renderWalletBanner() {
             <div class="mini-card-sub">${bonusBalance > 0 ? `Bao gồm ${formatCurrency(bonusBalance)} tiền thưởng ưu đãi` : 'Sử dụng để đăng nhiệm vụ hoặc thanh toán dịch vụ'}</div>
           </div>
         </div>
-        <button class="btn-primary compact" type="button" id="tasks-topup-btn">💳 Nạp Ví PayOS Ngay</button>
+        <button class="btn-primary compact" type="button" id="tasks-topup-btn">💳 Nạp Ví Ngay</button>
       </div>
 
       ${isVerified ? `
@@ -392,20 +392,20 @@ function renderCreateTaskTab(container) {
             <span class="setting-value strong-cell text-gold">${formatCurrency(totalCost)}</span>
           </div>
           <div class="setting-item">
-            <span class="setting-name">Số dư Ví Ảo khả dụng của bạn</span>
+            <span class="setting-name">Số dư Ví khả dụng của bạn</span>
             <span class="setting-value ${hasEnoughMoney ? 'text-green' : 'text-danger'}">${formatCurrency(totalAvailable)}</span>
           </div>
           ${!hasEnoughMoney ? `
             <div class="wallet-insufficient-notice">
               ⚠️ Số dư ví của bạn không đủ để đăng nhiệm vụ này (Thiếu <strong>${formatCurrency(totalCost - totalAvailable)}</strong>).
-              Vui lòng nạp thêm tiền vào Ví Ảo bằng cổng PayOS.
+              Vui lòng nạp thêm tiền vào Ví.
             </div>
           ` : ''}
         </div>
 
         <div class="modal-actions">
           ${!hasEnoughMoney ? `
-            <button class="btn-primary" type="button" id="create-task-topup-btn">💳 Nạp Ví PayOS Ngay</button>
+            <button class="btn-primary" type="button" id="create-task-topup-btn">💳 Nạp Ví Ngay</button>
           ` : `
             <button class="btn-primary" type="submit" id="create-task-submit-btn">Đăng Nhiệm vụ & Trừ Ví ➔</button>
           `}
@@ -481,7 +481,7 @@ function renderCreateTaskTab(container) {
       renderTabContent();
     } catch (err) {
       if (err?.message?.startsWith('INSUFFICIENT_WALLET')) {
-        Toast.show('Số dư ví không đủ. Vui lòng nạp ví qua PayOS.');
+        Toast.show('Số dư ví không đủ. Vui lòng nạp ví.');
       } else {
         Toast.show(err?.message || 'Không thể đăng nhiệm vụ.');
       }
