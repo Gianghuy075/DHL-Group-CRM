@@ -19,10 +19,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Đọc biến môi trường từ Vercel Environment Variables
+    // Đọc biến môi trường từ Vercel Environment Variables hoặc dùng key đầy đủ 64 ký tự
     const clientId = String(process.env.PAYOS_CLIENT_ID || '9cf9982b-46e0-44df-a7b3-c43a27303bb0').trim();
     const apiKey = String(process.env.PAYOS_API_KEY || 'eed33900-3e06-4963-835e-968dbc8aec18').trim();
-    const checksumKey = String(process.env.PAYOS_CHECKSUM_KEY || 'da9ff359d5a66c705e7e5f94fb90719c327d983ce91f83').trim().replace(/^["']|["']$/g, '');
+    const checksumKey = String(process.env.PAYOS_CHECKSUM_KEY || 'da9ff359d5a66c705e7e5f94fb90719c327d983ce91f831fe7ef1c1b688dc143').trim().replace(/^["']|["']$/g, '');
     const apiEndpoint = String(process.env.PAYOS_API_ENDPOINT || 'https://api-merchant.payos.vn/v2').trim();
 
     const { action } = req.body || {};
