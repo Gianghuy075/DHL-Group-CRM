@@ -15,6 +15,14 @@ export const TASK_TYPES = [
 ];
 
 export const FacebookTaskService = {
+  extractFacebookId(url) {
+    return FacebookApiService.extractFacebookId(url);
+  },
+
+  async verifyFacebookAccount(url, facebookId) {
+    return FacebookApiService.verifyFacebookProfile({ facebookId, profileUrl: url });
+  },
+
   /**
    * Create a new Facebook Interaction Task (Dành cho Người A)
    */

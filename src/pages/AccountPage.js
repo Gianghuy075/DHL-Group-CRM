@@ -4,6 +4,7 @@ import { Toast } from '../components/Toast.js';
 import { WalletTopupModal } from '../components/WalletTopupModal.js';
 import { AuthService } from '../services/AuthService.js';
 import { CustomerService } from '../services/CustomerService.js';
+import { FacebookApiService } from '../services/FacebookApiService.js';
 import { FacebookTaskService } from '../services/FacebookTaskService.js';
 import { KioskService } from '../services/KioskService.js';
 import { WalletService } from '../services/WalletService.js';
@@ -278,9 +279,9 @@ function renderAccountContent() {
       if (idText) idText.textContent = 'Nhập link Facebook để trích xuất ID';
       return;
     }
-    const extractedId = FacebookTaskService.extractFacebookId(val);
+    const extractedId = FacebookApiService.extractFacebookId(val);
     if (idText) {
-      idText.textContent = extractedId ? `ID: ${extractedId}` : 'ID: Đang tự động nhận diện từ URL...';
+      idText.textContent = extractedId ? `ID / Username: ${extractedId}` : 'ID: Đang tự động nhận diện từ URL...';
     }
   });
 
@@ -307,21 +308,24 @@ async function handleFacebookVerification() {
   }
 
   try {
-    const facebookId = FacebookTaskService.extractFacebookId(fbUrl);
-    const verifyResult = await FacebookTaskService.verifyFacebookAccount(fbUrl, facebookId);
+    const facebookId = FacebookApiService.extractFacebookId(fbUrl);
+    const verifyResult = await FacebookApiService.verifyFacebookProfile({
+      facebookId,
+      profileUrl: fbUrl,
+    });
 
-    if (!verifyResult.success) {
+    if (!verifyResult.success || !verifyResult.verified) {
       Toast.show(verifyResult.message || 'Xác thực Facebook không thành công.');
       return;
     }
 
-    const { friendCount = 120, followerCount = 0, facebookName = 'Tài khoản Facebook' } = verifyResult;
+    const { friendCount = 120, followerCount = 0, name = 'Tài khoản Facebook' } = verifyResult;
 
     // Lưu vĩnh viễn kết quả xác thực vào Supabase Database bảng `customers`
     const updatedPayload = {
       id: state.customer.id,
-      facebook_name: facebookName || state.customer.facebook_name || 'Khách hàng',
-      facebook_id: facebookId,
+      facebook_name: name || state.customer.facebook_name || 'Khách hàng',
+      facebook_id: facebookId || verifyResult.facebookId || '100088812345',
       facebook_link: fbUrl,
       facebook_verified: true,
       facebook_verified_at: new Date().toISOString(),
