@@ -24,7 +24,7 @@ export const WalletTopupModal = {
       onTopupSuccess,
       selectedAmount: 1000000,
       selectedBonus: 150000,
-      step: 1, // 1: Select Tier, 2: PayOS QR, 3: Success
+      step: 1, // 1: Select Tier, 2: PayOS QR & Polling, 3: Success
       payosInfo: null,
     };
 
@@ -44,7 +44,7 @@ function renderTopupStep1() {
   const { customerName, selectedAmount, selectedBonus } = activeTopupState;
 
   Modal.open({
-    title: '💰 Nạp tiền vào Ví Ảo (Nhận ngay Ưu đãi)',
+    title: '💰 Nạp tiền vào Ví Ảo KioskHub (Qua PayOS)',
     body: `
       <div class="wallet-topup-container">
         <div class="topup-header-banner">
@@ -81,7 +81,7 @@ function renderTopupStep1() {
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="wallet-topup-close-btn">Hủy</button>
           <button class="btn-primary" type="button" id="wallet-topup-submit-btn">
-            Tạo QR PayOS Nạp Ví ➔
+            Tạo Mã Nạp PayOS ➔
           </button>
         </div>
       </div>
@@ -120,7 +120,7 @@ function renderTopupStep1() {
     const btn = document.getElementById('wallet-topup-submit-btn');
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Đang tạo QR PayOS Nạp ví...';
+      btn.textContent = 'Đang kết nối PayOS API...';
     }
 
     try {
@@ -133,10 +133,10 @@ function renderTopupStep1() {
       activeTopupState.payosInfo = topupReq;
       renderTopupStep2QR();
     } catch (err) {
-      Toast.show(err?.message || 'Không thể tạo mã QR nạp ví.');
+      Toast.show(err?.message || 'Không thể tạo mã nạp ví qua PayOS.');
       if (btn) {
         btn.disabled = false;
-        btn.textContent = 'Tạo QR PayOS Nạp Ví ➔';
+        btn.textContent = 'Tạo Mã Nạp PayOS ➔';
       }
     }
   });
@@ -157,24 +157,46 @@ function updateTopupPreview() {
 function renderTopupStep2QR() {
   const { payosInfo, selectedAmount, selectedBonus } = activeTopupState;
 
+  const hasCheckoutUrl = Boolean(payosInfo.checkoutUrl && !payosInfo.isFallback);
+  const accountNo = payosInfo.accountNo || '';
+  const accountName = payosInfo.accountName || '';
+
   Modal.open({
-    title: 'Quét mã QR PayOS Nạp Ví Ảo',
+    title: 'Cổng Thanh Toán PayOS Tự Động',
     body: `
       <div class="wallet-topup-container">
         <div class="payos-qr-wrapper">
           <div class="payos-qr-box">
-            <img class="payos-qr-image" src="${escapeHtml(payosInfo.qrCode)}" alt="QR PayOS Nạp Ví" />
+            <img class="payos-qr-image" src="${escapeHtml(payosInfo.qrCode)}" alt="Mã QR PayOS Tự Động" />
             <div class="payos-qr-badge">PayOS VietQR Tự Động</div>
           </div>
 
           <div class="payos-transfer-details">
-            <div class="detail-row">
-              <span class="detail-label">Số tài khoản</span>
-              <div class="detail-val-copy">
-                <span class="detail-val strong-cell">${escapeHtml(payosInfo.accountNo)}</span>
-                <button class="btn-copy" type="button" data-copy="${escapeHtml(payosInfo.accountNo)}">Sao chép</button>
+            ${hasCheckoutUrl ? `
+              <div style="margin-bottom: 15px; text-align: center;">
+                <a href="${escapeHtml(payosInfo.checkoutUrl)}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block; padding: 10px 18px; text-decoration:none; width: 100%;">
+                  🔗 Mở Trang Thanh Toán PayOS ➔
+                </a>
               </div>
-            </div>
+            ` : ''}
+
+            ${accountNo ? `
+              <div class="detail-row">
+                <span class="detail-label">Số tài khoản</span>
+                <div class="detail-val-copy">
+                  <span class="detail-val strong-cell">${escapeHtml(accountNo)}</span>
+                  <button class="btn-copy" type="button" data-copy="${escapeHtml(accountNo)}">Sao chép</button>
+                </div>
+              </div>
+            ` : ''}
+
+            ${accountName ? `
+              <div class="detail-row">
+                <span class="detail-label">Chủ tài khoản</span>
+                <span class="detail-val">${escapeHtml(accountName)}</span>
+              </div>
+            ` : ''}
+
             <div class="detail-row">
               <span class="detail-label">Số tiền nạp</span>
               <div class="detail-val-copy">
@@ -187,7 +209,7 @@ function renderTopupStep2QR() {
               <span class="detail-val text-bonus">+${formatCurrency(selectedBonus)}</span>
             </div>
             <div class="detail-row highlight-row">
-              <span class="detail-label">Nội dung CK chuẩn</span>
+              <span class="detail-label">Nội dung nạp PayOS</span>
               <div class="detail-val-copy">
                 <span class="detail-val code-text">${escapeHtml(payosInfo.description)}</span>
                 <button class="btn-copy" type="button" data-copy="${escapeHtml(payosInfo.description)}">Sao chép</button>
@@ -196,13 +218,13 @@ function renderTopupStep2QR() {
           </div>
         </div>
 
-        <div class="payos-polling-status">
-          <span class="spinner-small"></span> Đang chờ tín hiệu chuyển khoản từ ngân hàng qua PayOS...
+        <div class="payos-polling-status" id="topup-status-indicator">
+          <span class="spinner-small"></span> Đang kết nối PayOS & chờ tự động ghi nhận chuyển khoản...
         </div>
 
         <div class="modal-actions">
-          <button class="btn-secondary" type="button" id="topup-step2-back">Duyệt lại gói</button>
-          <button class="btn-primary" type="button" id="topup-step2-confirm">Tôi đã chuyển khoản ➔</button>
+          <button class="btn-secondary" type="button" id="topup-step2-back">Quay lại</button>
+          <button class="btn-primary" type="button" id="topup-step2-confirm">🔄 Đối Soát PayOS Tự Động ➔</button>
         </div>
       </div>
     `,
@@ -217,13 +239,15 @@ function renderTopupStep2QR() {
 
   document.getElementById('topup-step2-back')?.addEventListener('click', renderTopupStep1);
 
-  document.getElementById('topup-step2-confirm')?.addEventListener('click', handleConfirmTopup);
+  document.getElementById('topup-step2-confirm')?.addEventListener('click', () => {
+    handleConfirmTopup(true);
+  });
 
-  // Polling for topup status
+  // Polling for topup status via PayOS API
   let attempts = 0;
   topupPollingTimer = setInterval(async () => {
     attempts += 1;
-    if (attempts > 100) {
+    if (attempts > 120) {
       WalletTopupModal.stopPolling();
       return;
     }
@@ -231,13 +255,52 @@ function renderTopupStep2QR() {
     const check = await PayOSService.checkPaymentStatus(payosInfo.orderCode);
     if (check.isPaid) {
       WalletTopupModal.stopPolling();
-      await handleConfirmTopup();
+      await executeWalletDepositCredit();
     }
-  }, 3500);
+  }, 3000);
 }
 
-async function handleConfirmTopup() {
-  WalletTopupModal.stopPolling();
+async function handleConfirmTopup(manualClick = false) {
+  const { payosInfo } = activeTopupState;
+  const statusEl = document.getElementById('topup-status-indicator');
+  const btn = document.getElementById('topup-step2-confirm');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Đang kiểm tra kết quả từ PayOS API...';
+  }
+
+  if (statusEl) {
+    statusEl.innerHTML = '<span class="spinner-small"></span> Đang truy vấn PayOS API...';
+  }
+
+  try {
+    const check = await PayOSService.checkPaymentStatus(payosInfo.orderCode);
+    if (check.isPaid) {
+      WalletTopupModal.stopPolling();
+      await executeWalletDepositCredit();
+    } else {
+      if (manualClick) {
+        Toast.show(`PayOS chưa ghi nhận thanh toán cho mã đơn ${payosInfo.orderCode}. Vui lòng chuyển khoản đúng thông tin và thử lại.`);
+      }
+      if (statusEl) {
+        statusEl.innerHTML = `⚠️ Chưa nhận được thanh toán cho mã đơn <strong>${payosInfo.orderCode}</strong>. Hệ thống sẽ tự động cập nhật ngay khi ngân hàng xử lý xong.`;
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔄 Đối Soát PayOS Tự Động ➔';
+      }
+    }
+  } catch (err) {
+    Toast.show(err?.message || 'Không thể đối soát với PayOS.');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🔄 Đối Soát PayOS Tự Động ➔';
+    }
+  }
+}
+
+async function executeWalletDepositCredit() {
   const { customerId, payosInfo, selectedAmount, selectedBonus, onTopupSuccess } = activeTopupState;
 
   try {
@@ -254,7 +317,7 @@ async function handleConfirmTopup() {
       body: `
         <div class="status-result-box success">
           <div class="status-icon">✅</div>
-          <div class="status-title">Đã cộng tiền vào Ví Ảo!</div>
+          <div class="status-title">PayOS Đã Xác Nhận Thanh Toán!</div>
           <div class="status-desc">
             Số tiền nạp: <strong>${formatCurrency(selectedAmount)}</strong><br/>
             Tiền thưởng ưu đãi: <strong class="text-bonus">+${formatCurrency(selectedBonus)}</strong><br/>

@@ -39,9 +39,6 @@ export const PayOSService = {
 
     const signature = await calculatePayOSSignature(payload);
 
-    // Build VietQR image fallback URL
-    const vietQrUrl = `https://img.vietqr.io/image/${PAYOS_CONFIG.bankId}-${PAYOS_CONFIG.accountNo}-compact2.png?amount=${payload.amount}&addInfo=${encodeURIComponent(cleanDescription)}&accountName=${encodeURIComponent(PAYOS_CONFIG.accountName)}`;
-
     try {
       // Call PayOS Merchant API
       const response = await fetch(`${PAYOS_CONFIG.apiEndpoint}/payment-requests`, {
@@ -58,39 +55,26 @@ export const PayOSService = {
         }),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.code === '00' && result.data) {
-          return {
-            success: true,
-            orderCode: normalizedOrderCode,
-            checkoutUrl: result.data.checkoutUrl,
-            qrCode: result.data.qrCode || vietQrUrl,
-            amount: payload.amount,
-            description: cleanDescription,
-            accountNo: result.data.accountNumber || PAYOS_CONFIG.accountNo,
-            accountName: result.data.accountName || PAYOS_CONFIG.accountName,
-            bankName: PAYOS_CONFIG.bankId,
-          };
-        }
+      const result = await response.json();
+      if (response.ok && result.code === '00' && result.data) {
+        return {
+          success: true,
+          orderCode: normalizedOrderCode,
+          checkoutUrl: result.data.checkoutUrl,
+          qrCode: result.data.qrCode || `https://qr.payos.vn/${PAYOS_CONFIG.clientId}/${normalizedOrderCode}/${payload.amount}`,
+          amount: payload.amount,
+          description: cleanDescription,
+          accountNo: result.data.accountNumber || '',
+          accountName: result.data.accountName || '',
+          bin: result.data.bin || '',
+        };
       }
-    } catch (error) {
-      console.warn('[PayOSService] Direct PayOS API call failed or CORS blocked. Falling back to VietQR format:', error);
-    }
 
-    // Fallback if API fails or CORS blocks in client-only mode
-    return {
-      success: true,
-      orderCode: normalizedOrderCode,
-      checkoutUrl: vietQrUrl,
-      qrCode: vietQrUrl,
-      amount: payload.amount,
-      description: cleanDescription,
-      accountNo: PAYOS_CONFIG.accountNo,
-      accountName: PAYOS_CONFIG.accountName,
-      bankName: PAYOS_CONFIG.bankId,
-      isFallback: true,
-    };
+      throw new Error(result.desc || result.message || 'Không thể khởi tạo liên kết PayOS. Vui lòng kiểm tra lại bộ khóa PayOS API.');
+    } catch (error) {
+      console.warn('[PayOSService] PayOS API error:', error);
+      throw error;
+    }
   },
 
   /**

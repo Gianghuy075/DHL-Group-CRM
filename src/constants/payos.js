@@ -1,12 +1,19 @@
-export const PAYOS_CONFIG = {
-  clientId: '9cf9982b-46e0-44df-a7b3-c43a27303bb0',
-  apiKey: 'eed33900-3e06-4963-835e-968dbc8aec18',
-  checksumKey: 'eed33900-3e06-4963-835e-968dbc8aec18',
-  apiEndpoint: 'https://api-merchant.payos.vn/v2',
-  bankId: 'MB',
-  accountNo: '088812102004',
-  accountName: 'NGUYEN THANH HAN',
-};
+function readPayOSConfig() {
+  const custom = window.DHL_CONFIG?.payos || {};
+  return {
+    clientId: custom.clientId || '',
+    apiKey: custom.apiKey || '',
+    checksumKey: custom.checksumKey || '',
+    apiEndpoint: custom.apiEndpoint || 'https://api-merchant.payos.vn/v2',
+  };
+}
+
+export const PAYOS_CONFIG = new Proxy({}, {
+  get(target, prop) {
+    const config = readPayOSConfig();
+    return config[prop];
+  },
+});
 
 /**
  * Calculates PayOS request signature using HMAC SHA-256.
@@ -25,7 +32,7 @@ export async function calculatePayOSSignature(data, checksumKey = PAYOS_CONFIG.c
  * Internal HMAC SHA-256 implementation using Web Crypto API with standard JS fallback.
  */
 async function hmacSha256(message, key) {
-  if (window.crypto?.subtle) {
+  if (window.crypto?.subtle && key) {
     try {
       const encoder = new TextEncoder();
       const keyData = encoder.encode(key);
@@ -53,6 +60,7 @@ async function hmacSha256(message, key) {
  * Pure JS HMAC-SHA256 fallback implementation
  */
 function jsHmacSha256(message, keyStr) {
+  if (!keyStr) return '';
   const sha256 = (bytes) => {
     const K = [
       0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,

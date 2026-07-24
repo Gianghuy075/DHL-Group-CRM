@@ -216,21 +216,34 @@ function renderStep2QRTransfer() {
           </div>
 
           <div class="payos-transfer-details">
-            <div class="detail-row">
-              <span class="detail-label">Ngân hàng</span>
-              <span class="detail-val strong">${escapeHtml(payosInfo.bankName)}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Số tài khoản</span>
-              <div class="detail-val-copy">
-                <span class="detail-val strong-cell" id="payos-copy-stk">${escapeHtml(payosInfo.accountNo)}</span>
-                <button class="btn-copy" type="button" data-copy="${escapeHtml(payosInfo.accountNo)}">Sao chép</button>
+            ${payosInfo.checkoutUrl ? `
+              <div style="margin-bottom: 12px; text-align: center;">
+                <a href="${escapeHtml(payosInfo.checkoutUrl)}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block; padding: 10px 18px; text-decoration:none; width: 100%;">
+                  🔗 Mở Trang Thanh Toán PayOS Tự Động ➔
+                </a>
               </div>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Chủ tài khoản</span>
-              <span class="detail-val">${escapeHtml(payosInfo.accountName)}</span>
-            </div>
+            ` : ''}
+            ${payosInfo.bankName ? `
+              <div class="detail-row">
+                <span class="detail-label">Ngân hàng</span>
+                <span class="detail-val strong">${escapeHtml(payosInfo.bankName)}</span>
+              </div>
+            ` : ''}
+            ${payosInfo.accountNo ? `
+              <div class="detail-row">
+                <span class="detail-label">Số tài khoản</span>
+                <div class="detail-val-copy">
+                  <span class="detail-val strong-cell" id="payos-copy-stk">${escapeHtml(payosInfo.accountNo)}</span>
+                  <button class="btn-copy" type="button" data-copy="${escapeHtml(payosInfo.accountNo)}">Sao chép</button>
+                </div>
+              </div>
+            ` : ''}
+            ${payosInfo.accountName ? `
+              <div class="detail-row">
+                <span class="detail-label">Chủ tài khoản</span>
+                <span class="detail-val">${escapeHtml(payosInfo.accountName)}</span>
+              </div>
+            ` : ''}
             <div class="detail-row">
               <span class="detail-label">Số tiền</span>
               <div class="detail-val-copy">
@@ -249,12 +262,12 @@ function renderStep2QRTransfer() {
         </div>
 
         <div class="payos-polling-status" id="payos-polling-indicator">
-          <span class="spinner-small"></span> Đang lắng nghe giao dịch chuyển khoản từ PayOS...
+          <span class="spinner-small"></span> Đang kết nối PayOS API & lắng nghe giao dịch chuyển khoản...
         </div>
 
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="payos-step2-back-btn">Quay lại</button>
-          <button class="btn-primary" type="button" id="payos-step2-verify-btn">Tôi đã chuyển khoản ➔</button>
+          <button class="btn-primary" type="button" id="payos-step2-verify-btn">🔄 Đối soát PayOS ➔</button>
         </div>
       </div>
     `,
