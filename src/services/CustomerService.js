@@ -57,7 +57,7 @@ export const CustomerService = {
         .from('customers')
         .select('*')
         .eq('id', id)
-        .single(),
+        .maybeSingle(),
     );
   },
 
@@ -68,7 +68,7 @@ export const CustomerService = {
         .from('customers')
         .insert([pickCustomerPayload(customer)])
         .select()
-        .single(),
+        .maybeSingle(),
     );
   },
 
@@ -80,26 +80,29 @@ export const CustomerService = {
         .update(pickCustomerPayload(customer))
         .eq('id', id)
         .select()
-        .single(),
+        .maybeSingle(),
     );
   },
 
-  async updateFacebookVerification(id, { verified = true, friendCount = 0, followerCount = 0, isPublic = true, facebookId = '' }) {
+  async updateFacebookVerification(id, { verified = true, friendCount = 0, followerCount = 0, isPublic = true, facebookId = '', facebookName = '' }) {
     const supabase = requireSupabaseClient();
+    const payload = {
+      facebook_verified: verified,
+      facebook_verified_at: new Date().toISOString(),
+      friend_count: friendCount,
+      follower_count: followerCount,
+      is_public_profile: isPublic,
+    };
+    if (facebookId) payload.facebook_id = facebookId;
+    if (facebookName) payload.facebook_name = facebookName;
+
     return runQuery(
       supabase
         .from('customers')
-        .update({
-          facebook_verified: verified,
-          facebook_verified_at: new Date().toISOString(),
-          friend_count: friendCount,
-          follower_count: followerCount,
-          is_public_profile: isPublic,
-          facebook_id: facebookId || undefined,
-        })
+        .update(payload)
         .eq('id', id)
         .select()
-        .single(),
+        .maybeSingle(),
     );
   },
 
@@ -114,7 +117,7 @@ export const CustomerService = {
         .from('customers')
         .upsert(customer)
         .select()
-        .single(),
+        .maybeSingle(),
     );
   },
 };

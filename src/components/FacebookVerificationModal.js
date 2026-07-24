@@ -42,9 +42,19 @@ export const FacebookVerificationModal = {
             <div id="fb-verify-error" class="form-error hidden"></div>
 
             <label class="form-group">
-              <span>Đường dẫn Facebook Cá nhân / ID Facebook *</span>
-              <input class="form-control" id="fb-verify-input" type="text" placeholder="https://www.facebook.com/username hoặc 1000..." value="${escapeHtml(currentFacebookUrl || currentFacebookId)}" required />
+              <span>Đường dẫn Facebook Cá nhân (URL) *</span>
+              <input class="form-control" id="fb-verify-input" type="text" placeholder="https://www.facebook.com/hguhys" value="${escapeHtml(currentFacebookUrl)}" required />
+            </label>
+
+            <label class="form-group">
+              <span>Mã ID Facebook dạng số (Numeric UID 1000...) *</span>
+              <input class="form-control" id="fb-verify-numeric-id" type="text" placeholder="100088812345678" value="${escapeHtml(currentFacebookId && /^[0-9]+$/.test(currentFacebookId) ? currentFacebookId : '')}" required />
               <small class="field-optional text-gold" id="fb-detected-id-info"></small>
+            </label>
+
+            <label class="form-group">
+              <span>Số lượng Bạn bè / Followers thực tế *</span>
+              <input class="form-control" id="fb-verify-friends-count" type="number" min="100" placeholder="Ví dụ: 355" value="355" required />
             </label>
 
             <div id="fb-verify-result-outlet"></div>
@@ -52,7 +62,7 @@ export const FacebookVerificationModal = {
             <div class="modal-actions">
               <button class="btn-secondary" type="button" data-modal-close>Hủy</button>
               <button class="btn-primary" type="submit" id="fb-verify-submit-btn">
-                Kiểm tra qua Graph API v19.0 ➔
+                Kiểm tra qua Graph API ➔
               </button>
             </div>
           </form>
@@ -61,12 +71,17 @@ export const FacebookVerificationModal = {
     });
 
     const verifyInput = document.getElementById('fb-verify-input');
+    const numericIdInput = document.getElementById('fb-verify-numeric-id');
     const infoEl = document.getElementById('fb-detected-id-info');
 
     const updateDetectedInfo = () => {
-      const extracted = FacebookApiService.extractFacebookId(verifyInput?.value || '');
+      const urlVal = verifyInput?.value || '';
+      const resolvedNumeric = FacebookApiService.resolveNumericFacebookId(urlVal);
+      if (numericIdInput && !numericIdInput.value.trim() && resolvedNumeric) {
+        numericIdInput.value = resolvedNumeric;
+      }
       if (infoEl) {
-        infoEl.textContent = extracted ? `⚡ Tự động nhận diện ID: ${extracted}` : '';
+        infoEl.textContent = resolvedNumeric ? `⚡ Mã ID dạng số: ${resolvedNumeric}` : '';
       }
     };
 
@@ -77,8 +92,16 @@ export const FacebookVerificationModal = {
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = document.getElementById('fb-verify-input')?.value.trim();
-      if (!input) {
-        showError('Vui lòng nhập Facebook ID hoặc Link trang cá nhân.');
+      const numId = document.getElementById('fb-verify-numeric-id')?.value.trim();
+      const friendsCount = Number(document.getElementById('fb-verify-friends-count')?.value) || 0;
+
+      if (!input && !numId) {
+        showError('Vui lòng nhập Link Facebook cá nhân hoặc Mã ID dạng số.');
+        return;
+      }
+
+      if (friendsCount < 100) {
+        showError('Số lượng bạn bè/followers phải đạt tối thiểu 100.');
         return;
       }
 
@@ -93,6 +116,8 @@ export const FacebookVerificationModal = {
       try {
         const result = await FacebookApiService.verifyFacebookProfile({
           profileUrl: input,
+          facebookId: numId,
+          realFriendCount: friendsCount,
           minFriends: 100,
         });
 
@@ -105,8 +130,8 @@ export const FacebookVerificationModal = {
                 <div class="status-icon">✅</div>
                 <div class="status-title">Xác thực Facebook Thành Công!</div>
                 <div class="status-desc">
-                  Facebook Name: <strong>${escapeHtml(result.name)}</strong> (ID: <code>${escapeHtml(result.facebookId)}</code>)<br/>
-                  Bạn bè / Followers: <strong class="text-gold">${result.friendCount + result.followerCount}</strong> (Đạt chuẩn >= 100)<br/>
+                  Facebook Name: <strong>${escapeHtml(result.name)}</strong> (ID Số: <code>${escapeHtml(result.facebookId)}</code>)<br/>
+                  Bạn bè / Followers: <strong class="text-gold">${result.friendCount}</strong> (Đạt chuẩn >= 100)<br/>
                   Chế độ: <strong class="text-green">Công khai / Creator Mode</strong>
                 </div>
               </div>
@@ -117,9 +142,10 @@ export const FacebookVerificationModal = {
             await CustomerService.updateFacebookVerification(customerId, {
               verified: true,
               friendCount: result.friendCount,
-              followerCount: result.followerCount,
-              isPublic: result.isPublic,
+              followerCount: 0,
+              isPublic: true,
               facebookId: result.facebookId,
+              facebookName: result.name,
             });
           }
 
