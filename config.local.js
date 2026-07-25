@@ -2,9 +2,11 @@ window.DHL_CONFIG = {
   supabaseUrl: 'https://qxcqmxsseoiokapyxsli.supabase.co',
   supabaseAnonKey: 'sb_publishable_9SWIFSBrsbkz2Y_XuhuLAg_GR4n4dzs',
   dbSchema: 'DHL-Group-CRM',
+  // NestJS backend base URL (see /home/luong/Desktop/FPT/NestJS/DHL_GROUP_CRM_BE)
+  apiBaseUrl: 'http://localhost:4567',
   payos: {
-    clientId: '9cf9982b-46e0-44df-a7b3-c43a27303bb0',
-    apiKey: 'eed33900-3e06-4963-835e-968dbc8aec18',
-    checksumKey: 'da9ff359d5a66c705e7e5f94fb90719c327d983ce91f831fe7ef1c1b688dc143',
+    clientId: 'd4c36acb-a283-48be-9547-003bc0b88393',
+    apiKey: 'eabace6a-b5e2-4cd1-9176-bc1f44878fa5',
+    checksumKey: '5f9afb8d4e132184753ecb224f2a45b9fdd8d740dc912d8a5fa03595eb521a28',
   },
 };

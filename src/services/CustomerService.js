@@ -1,7 +1,4 @@
-import { applyPagination, applySort, requireSupabaseClient, runQuery } from './BaseService.js';
-import { startOfToday, toDateOnly } from '../utils/date.js';
-
-const EXPIRING_WINDOW_DAYS = 30;
+import { apiClient } from './apiClient.js';
 
 const CUSTOMER_MUTABLE_FIELDS = [
   'facebook_name',
@@ -19,6 +16,9 @@ const CUSTOMER_MUTABLE_FIELDS = [
   'is_public_profile',
 ];
 
+// Talks to the NestJS backend (GET/POST/PATCH /customers). Public method
+// signatures and return shapes match the old Supabase-backed service, so pages
+// and components need no changes.
 export const CustomerService = {
   async list({
     searchTerm = '',
@@ -27,83 +27,41 @@ export const CustomerService = {
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
-    const supabase = requireSupabaseClient();
-    const kioskCustomerIds = await findCustomerIdsByKioskState(supabase, kioskState);
-    let query = supabase
-      .from('customers')
-      .select('*', { count: 'exact' });
-
-    if (searchTerm) {
-      const pattern = `%${searchTerm}%`;
-      query = query.or(`phone.ilike.${pattern},facebook_id.ilike.${pattern},facebook_name.ilike.${pattern}`);
-    }
-
-    if (status) query = query.eq('status', status);
-    if (kioskCustomerIds) {
-      if (!kioskCustomerIds.length) {
-        return { data: [], count: 0 };
-      }
-
-      query = query.in('id', kioskCustomerIds);
-    }
-
-    return runQuery(applyPagination(applySort(query, sort), pagination));
+    return apiClient.get('/customers', {
+      searchTerm,
+      status,
+      kioskState,
+      sortColumn: sort?.column || 'created_at',
+      sortAscending: sort?.ascending !== false,
+      page: Number(pagination?.page || 1),
+      pageSize: Number(pagination?.pageSize || 25),
+    });
   },
 
   async getById(id) {
-    const supabase = requireSupabaseClient();
-    return runQuery(
-      supabase
-        .from('customers')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle(),
-    );
+    return apiClient.get(`/customers/${id}`);
   },
 
   async create(customer) {
-    const supabase = requireSupabaseClient();
-    return runQuery(
-      supabase
-        .from('customers')
-        .insert([pickCustomerPayload(customer)])
-        .select()
-        .maybeSingle(),
-    );
+    return apiClient.post('/customers', pickCustomerPayload(customer));
   },
 
   async update(id, customer) {
-    const supabase = requireSupabaseClient();
-    return runQuery(
-      supabase
-        .from('customers')
-        .update(pickCustomerPayload(customer))
-        .eq('id', id)
-        .select()
-        .maybeSingle(),
-    );
+    return apiClient.patch(`/customers/${id}`, pickCustomerPayload(customer));
   },
 
-  async updateFacebookVerification(id, { verified = true, friendCount = 0, followerCount = 0, isPublic = true, facebookId = '', facebookName = '' }) {
-    const supabase = requireSupabaseClient();
-    const payload = {
-      facebook_verified: verified,
-      facebook_verified_at: new Date().toISOString(),
-      friend_count: friendCount,
-      follower_count: followerCount,
-      is_public_profile: isPublic,
-    };
-    if (facebookId) payload.facebook_id = facebookId;
-    if (facebookName) payload.facebook_name = facebookName;
-
-    return runQuery(
-      supabase
-        .from('customers')
-        .update(payload)
-        .eq('id', id)
-        .select()
-        .maybeSingle(),
-    );
+  async updateFacebookVerification(
+    id,
+    { verified = true, friendCount = 0, followerCount = 0, isPublic = true, facebookId = '', facebookName = '' },
+  ) {
+    return apiClient.patch(`/customers/${id}/facebook-verification`, {
+      verified,
+      friendCount,
+      followerCount,
+      isPublic,
+      facebookId,
+      facebookName,
+    });
   },
 
   async setStatus(id, status) {
@@ -111,46 +69,14 @@ export const CustomerService = {
   },
 
   async upsert(customer) {
-    const supabase = requireSupabaseClient();
-    return runQuery(
-      supabase
-        .from('customers')
-        .upsert(customer)
-        .select()
-        .maybeSingle(),
-    );
+    // Existing callers always pass a record with an id → update it; otherwise create.
+    if (customer?.id) {
+      const { id, ...rest } = customer;
+      return CustomerService.update(id, rest);
+    }
+    return CustomerService.create(customer);
   },
 };
-
-async function findCustomerIdsByKioskState(supabase, kioskState) {
-  if (!kioskState) return null;
-
-  const today = startOfToday();
-  const todayDate = toDateOnly(today);
-  let query = supabase
-    .from('kiosks')
-    .select('customer_id');
-
-  if (kioskState === 'expired') {
-    query = query.or(`status.eq.expired,end_date.lt.${todayDate}`);
-  } else if (kioskState === 'warning') {
-    const warningEndDate = new Date(today);
-    warningEndDate.setDate(today.getDate() + EXPIRING_WINDOW_DAYS);
-    query = query
-      .in('status', ['active', 'warning'])
-      .gte('end_date', todayDate)
-      .lte('end_date', toDateOnly(warningEndDate));
-  } else {
-    return null;
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  return [...new Set((data || [])
-    .map((kiosk) => kiosk.customer_id)
-    .filter(Boolean))];
-}
 
 function pickCustomerPayload(customer = {}) {
   return CUSTOMER_MUTABLE_FIELDS.reduce((payload, field) => {

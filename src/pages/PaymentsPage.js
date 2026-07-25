@@ -5,6 +5,7 @@ import { PageHeader } from '../components/PageHeader.js';
 import { StatCard } from '../components/StatCard.js';
 import { Toast } from '../components/Toast.js';
 import { Toolbar } from '../components/Toolbar.js';
+import { AuthService } from '../services/AuthService.js';
 import { BusinessTypeService } from '../services/BusinessTypeService.js';
 import { PaymentService } from '../services/PaymentService.js';
 import { formatCurrency } from '../utils/currency.js';

@@ -24,7 +24,7 @@ export const WalletService = {
           .from('customers')
           .select('wallet_balance')
           .eq('id', customerId)
-          .single(),
+          .maybeSingle(),
       );
 
       const walletBalance = Number(customer?.wallet_balance || 0);

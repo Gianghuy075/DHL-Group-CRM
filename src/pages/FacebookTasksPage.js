@@ -72,28 +72,45 @@ async function loadUserData() {
     const session = await AuthService.getCurrentSession();
     if (session?.user?.id) {
       const userId = session.user.id;
-      let customer = null;
-      try {
-        const { data } = await CustomerService.getById(userId);
-        customer = data;
-      } catch (err) {
-        console.warn('[FacebookTasksPage] Customer lookup fallback for user:', userId);
-      }
+      const profile = await AuthService.getCurrentProfile(userId);
+      const userEmail = session.user.email || '';
 
-      if (!customer) {
-        const userEmail = session.user.email || '';
-        const displayName = session.user.user_metadata?.display_name || userEmail.split('@')[0] || 'Người dùng 1';
-        customer = {
+      // Nhiệm vụ Facebook & Ví Ảo là tính năng của khách hàng (role 'user').
+      // Admin/reviewer không có bản ghi trong bảng `customers`, nên bỏ qua các
+      // truy vấn hồ sơ + ví để tránh lỗi 404 (/customers/:id) và 406 (ví .single()).
+      if (profile?.role === 'user') {
+        let customer = null;
+        try {
+          const { data } = await CustomerService.getById(userId);
+          customer = data;
+        } catch (err) {
+          console.warn('[FacebookTasksPage] Customer lookup fallback for user:', userId);
+        }
+
+        if (!customer) {
+          const displayName = session.user.user_metadata?.display_name || userEmail.split('@')[0] || 'Người dùng 1';
+          customer = {
+            id: userId,
+            facebook_name: displayName,
+            status: 'active',
+            wallet_balance: 0,
+            bonus_balance: 0,
+          };
+        }
+
+        state.currentCustomer = customer;
+        state.walletInfo = await WalletService.getWalletInfo(customer.id);
+      } else {
+        // Không phải khách hàng: hiển thị banner với số dư 0, không gọi API khách hàng/ví.
+        state.currentCustomer = {
           id: userId,
-          facebook_name: displayName,
+          facebook_name: profile?.display_name || userEmail.split('@')[0] || 'Quản trị viên',
           status: 'active',
           wallet_balance: 0,
           bonus_balance: 0,
         };
+        state.walletInfo = { walletBalance: 0, bonusBalance: 0, totalAvailable: 0 };
       }
-
-      state.currentCustomer = customer;
-      state.walletInfo = await WalletService.getWalletInfo(customer.id);
     }
   } catch (err) {
     console.warn('[FacebookTasksPage] Load user error:', err);

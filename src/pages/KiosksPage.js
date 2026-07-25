@@ -3,6 +3,7 @@ import { openKioskForm } from '../components/KioskForm.js';
 import { PageHeader } from '../components/PageHeader.js';
 import { openRenewKioskForm } from '../components/RenewKioskForm.js';
 import { Toolbar } from '../components/Toolbar.js';
+import { AuthService } from '../services/AuthService.js';
 import { BusinessTypeService } from '../services/BusinessTypeService.js';
 import { KioskService } from '../services/KioskService.js';
 import { formatCurrency } from '../utils/currency.js';
