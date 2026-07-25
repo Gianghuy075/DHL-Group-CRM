@@ -18,7 +18,7 @@ const state = {
   myTasks: [],
   selectedTaskTypeFilter: '',
   createTaskForm: {
-    taskType: 'like',
+    taskType: 'like_post',
     postUrl: '',
     targetQuantity: 50,
     unitPrice: 500,
@@ -268,7 +268,7 @@ async function renderMarketplaceTab(container) {
       }
 
       btn.disabled = true;
-      btn.textContent = 'Đang tự động kiểm tra qua Graph API...';
+      btn.textContent = 'Đang gửi bằng chứng...';
 
       try {
         const result = await FacebookTaskService.submitTaskWork({
@@ -282,7 +282,7 @@ async function renderMarketplaceTab(container) {
       } catch (err) {
         Toast.show(err?.message || 'Không thể thực hiện nhiệm vụ.');
         btn.disabled = false;
-        btn.textContent = 'Làm & Kiểm tra Graph API';
+        btn.textContent = 'Gửi bằng chứng ➔';
       }
     });
   });
@@ -319,7 +319,7 @@ function renderTaskCard(task) {
 
       <div class="task-card-footer">
         <a class="btn-secondary compact" href="${escapeHtml(task.post_url)}" target="_blank" rel="noreferrer">Mở Facebook ↗</a>
-        <button class="btn-primary compact" type="button" data-do-task="${escapeHtml(task.id)}">Nhận thưởng ➔</button>
+        <button class="btn-primary compact" type="button" data-do-task="${escapeHtml(task.id)}">Gửi bằng chứng ➔</button>
       </div>
     </div>
   `;

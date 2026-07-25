@@ -1,7 +1,6 @@
 import { Modal } from './Modal.js';
 import { Toast } from './Toast.js';
 import { DEPOSIT_BONUS_TIERS, WalletService } from '../services/WalletService.js';
-import { PayOSService } from '../services/PayOSService.js';
 import { formatCurrency } from '../utils/currency.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -239,7 +238,7 @@ function renderTopupStep2QR() {
       return;
     }
 
-    const check = await PayOSService.checkPaymentStatus(payosInfo.orderCode);
+    const check = await WalletService.checkTopupStatus(payosInfo.orderCode);
     if (check.isPaid) {
       WalletTopupModal.stopPolling();
       await executeWalletDepositCredit();
@@ -262,7 +261,7 @@ async function handleConfirmTopup(manualClick = false) {
   }
 
   try {
-    const check = await PayOSService.checkPaymentStatus(payosInfo.orderCode);
+    const check = await WalletService.checkTopupStatus(payosInfo.orderCode);
     if (check.isPaid) {
       WalletTopupModal.stopPolling();
       await executeWalletDepositCredit();
@@ -292,11 +291,7 @@ async function executeWalletDepositCredit() {
 
   try {
     const result = await WalletService.confirmDeposit({
-      customerId,
       orderCode: payosInfo.orderCode,
-      amount: selectedAmount,
-      bonusAmount: selectedBonus,
-      description: `Nạp ví ${payosInfo.orderCode}`,
     });
 
     Modal.open({

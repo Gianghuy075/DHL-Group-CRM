@@ -1,4 +1,4 @@
-import { requireSupabaseClient, runQuery } from './BaseService.js';
+import { apiClient } from './apiClient.js';
 import { WalletService } from './WalletService.js';
 import { FacebookApiService } from './FacebookApiService.js';
 
@@ -24,7 +24,8 @@ export const FacebookTaskService = {
   },
 
   /**
-   * Create a new Facebook Interaction Task (Dành cho Người A)
+   * Create a new Facebook Interaction Task (Người A). The BE atomically debits
+   * the creator's wallet and creates the task in one transaction.
    */
   async createTask({
     creatorId,
@@ -43,84 +44,31 @@ export const FacebookTaskService = {
 
     const totalCost = quantity * price;
 
-    // Check Wallet balance
+    // Pre-check balance so the UI can offer a topup (BE re-checks authoritatively).
     const walletInfo = await WalletService.getWalletInfo(creatorId);
     if (walletInfo.totalAvailable < totalCost) {
       const missing = totalCost - walletInfo.totalAvailable;
       throw new Error(`INSUFFICIENT_WALLET:${totalCost}:${walletInfo.totalAvailable}:${missing}`);
     }
 
-    // Deduct cost from Creator's Virtual Wallet
-    const typeObj = TASK_TYPES.find((t) => t.id === taskType) || TASK_TYPES[0];
-    await WalletService.payWithWallet({
-      customerId: creatorId,
-      amount: totalCost,
-      description: `Đăng nhiệm vụ ${typeObj.name} (x${quantity})`,
+    const task = await apiClient.post('/facebook-tasks', {
+      taskType,
+      postUrl: postUrl.trim(),
+      targetQuantity: quantity,
+      unitPrice: price,
+      note: note.trim() || undefined,
     });
 
-    const facebookTargetId = FacebookApiService.extractFacebookId(postUrl);
-    const supabase = requireSupabaseClient();
-    if (!supabase) throw new Error('Chưa kết nối Supabase.');
-
-    const { data: task } = await runQuery(
-      supabase
-        .from('facebook_tasks')
-        .insert([{
-          creator_id: creatorId,
-          task_type: taskType,
-          post_url: postUrl.trim(),
-          facebook_target_id: facebookTargetId,
-          target_quantity: quantity,
-          completed_quantity: 0,
-          unit_price: price,
-          total_cost: totalCost,
-          status: 'active',
-          note: note.trim() || null,
-        }])
-        .select()
-        .single(),
-    );
-
-    return {
-      success: true,
-      task,
-      totalCost,
-    };
+    return { success: true, task, totalCost };
   },
 
   /**
-   * List active tasks available in the Task Marketplace (Dành cho Người B)
+   * List active tasks available in the Task Marketplace (Người B). The BE
+   * already excludes the worker's own tasks and ones they've submitted.
    */
-  async listActiveTasks({ taskType = '', workerId = null } = {}) {
-    const supabase = requireSupabaseClient();
-    if (!supabase) return { data: [] };
-
+  async listActiveTasks({ taskType = '' } = {}) {
     try {
-      let query = supabase
-        .from('facebook_tasks')
-        .select('*, customers!facebook_tasks_creator_id_fkey(facebook_name, phone)')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
-      if (taskType) {
-        query = query.eq('task_type', taskType);
-      }
-
-      const { data: tasks } = await runQuery(query);
-      if (!tasks) return { data: [] };
-
-      // Filter out tasks already completed by workerId if specified
-      if (workerId) {
-        const { data: doneSubmissions } = await supabase
-          .from('task_submissions')
-          .select('task_id')
-          .eq('worker_id', workerId);
-
-        const doneSet = new Set((doneSubmissions || []).map((s) => s.task_id));
-        return { data: tasks.filter((t) => !doneSet.has(t.id)) };
-      }
-
-      return { data: tasks };
+      return await apiClient.get('/facebook-tasks', taskType ? { taskType } : undefined);
     } catch (err) {
       console.warn('[FacebookTaskService] Failed to list active tasks:', err);
       return { data: [] };
@@ -128,21 +76,12 @@ export const FacebookTaskService = {
   },
 
   /**
-   * List tasks created by a specific user (Dành cho Người A)
+   * List tasks created by the authenticated user (Người A).
    */
   async listTasksByCreator(creatorId) {
     if (!creatorId) return { data: [] };
-    const supabase = requireSupabaseClient();
-    if (!supabase) return { data: [] };
-
     try {
-      return await runQuery(
-        supabase
-          .from('facebook_tasks')
-          .select('*, task_submissions(*)')
-          .eq('creator_id', creatorId)
-          .order('created_at', { ascending: false }),
-      );
+      return await apiClient.get('/facebook-tasks/mine');
     } catch (err) {
       console.warn('[FacebookTaskService] Failed to list creator tasks:', err);
       return { data: [] };
@@ -150,167 +89,48 @@ export const FacebookTaskService = {
   },
 
   /**
-   * Worker B submits task execution & triggers Facebook Graph API auto-verification
+   * Worker B submits proof of work. The BE records a pending submission for
+   * manual admin review (cross-interaction can't be auto-verified via Graph API).
    */
-  async submitTaskWork({ taskId, workerId, proofImageUrl = '' }) {
-    if (!taskId || !workerId) throw new Error('Nhiệm vụ hoặc Người làm không hợp lệ.');
-
-    const supabase = requireSupabaseClient();
-    if (!supabase) throw new Error('Chưa kết nối Supabase.');
-
-    // Fetch task info
-    const { data: task } = await runQuery(
-      supabase
-        .from('facebook_tasks')
-        .select('*')
-        .eq('id', taskId)
-        .single(),
-    );
-
-    if (!task || task.status !== 'active') {
-      throw new Error('Nhiệm vụ này đã hoàn thành hoặc không còn hoạt động.');
-    }
-
-    // Call Facebook Graph API for automated verification
-    const graphResult = await FacebookApiService.verifyInteractionViaGraphApi({
-      objectId: task.facebook_target_id,
-      taskType: task.task_type,
+  async submitTaskWork({ taskId, proofImageUrl = '' }) {
+    if (!taskId) throw new Error('Nhiệm vụ không hợp lệ.');
+    return await apiClient.post(`/facebook-tasks/${taskId}/submit`, {
+      proofImageUrl: proofImageUrl || undefined,
     });
-
-    const isVerified = Boolean(graphResult.verified);
-
-    // Record task submission
-    const { data: submission } = await runQuery(
-      supabase
-        .from('task_submissions')
-        .insert([{
-          task_id: taskId,
-          worker_id: workerId,
-          proof_image_url: proofImageUrl || null,
-          proof_data: graphResult,
-          status: isVerified ? 'approved' : 'pending',
-          reward_amount: task.unit_price,
-          verified_via_api: isVerified,
-        }])
-        .select()
-        .single(),
-    );
-
-    // If Graph API automatically verified it, credit reward to Worker B's wallet
-    if (isVerified) {
-      await FacebookTaskService.approveSubmission(submission.id, workerId, task.unit_price);
-    }
-
-    const typeObj = TASK_TYPES.find((t) => t.id === task.task_type) || TASK_TYPES[0];
-
-    return {
-      success: true,
-      submission,
-      verifiedViaApi: isVerified,
-      message: isVerified
-        ? `Graph API đã xác nhận nhiệm vụ ${typeObj.name}! Cộng ngay ${task.unit_price.toLocaleString('vi-VN')} đ vào Ví Ảo!`
-        : 'Đã gửi bằng chứng nhiệm vụ, đang chờ đối soát trả thưởng.',
-    };
   },
 
   /**
-   * Approve task submission & credit reward to Worker B's wallet
+   * Admin approves a task submission & credits the worker's wallet (BE, atomic).
    */
-  async approveSubmission(submissionId, workerId, rewardAmount) {
-    const supabase = requireSupabaseClient();
-    if (!supabase) throw new Error('Chưa kết nối Supabase.');
+  async approveSubmission(submissionId) {
+    return await apiClient.post(`/facebook-tasks/submissions/${submissionId}/approve`);
+  },
 
+  /**
+   * Admin rejects a task submission (BE).
+   */
+  async rejectSubmission(submissionId, reason = '') {
+    return await apiClient.post(`/facebook-tasks/submissions/${submissionId}/reject`, {
+      reason: reason || undefined,
+    });
+  },
+
+  /**
+   * List pending submissions awaiting manual review (admin only, BE).
+   */
+  async listPendingSubmissions() {
     try {
-      const { data, error } = await supabase.rpc('process_task_reward', {
-        p_submission_id: submissionId,
-        p_worker_id: workerId,
-        p_reward_amount: Number(rewardAmount),
-      });
-
-      if (!error && data?.success) {
-        return data;
-      }
+      return await apiClient.get('/facebook-tasks/submissions/pending');
     } catch (err) {
-      console.warn('[FacebookTaskService] RPC process_task_reward not available, running fallback:', err);
+      console.warn('[FacebookTaskService] Failed to list pending submissions:', err);
+      return { data: [] };
     }
-
-    // Direct fallback logic
-    await runQuery(
-      supabase
-        .from('task_submissions')
-        .update({ status: 'approved' })
-        .eq('id', submissionId),
-    );
-
-    // Credit Worker B balance
-    const walletInfo = await WalletService.getWalletInfo(workerId);
-    const newBalance = walletInfo.walletBalance + Number(rewardAmount);
-
-    await runQuery(
-      supabase
-        .from('customers')
-        .update({ wallet_balance: newBalance })
-        .eq('id', workerId),
-    );
-
-    await supabase.from('wallet_transactions').insert([{
-      customer_id: workerId,
-      transaction_type: 'bonus',
-      amount: Number(rewardAmount),
-      status: 'completed',
-      description: 'Thưởng hoàn thành nhiệm vụ chéo Facebook',
-    }]);
-
-    return { success: true };
   },
 
   /**
-   * Cancel or Reject task & refund remaining unperformed cost to Creator A's wallet
+   * Cancel a task & refund the remaining unperformed cost to the creator (BE, atomic).
    */
-  async cancelTask(taskId, creatorId) {
-    const supabase = requireSupabaseClient();
-    if (!supabase) throw new Error('Chưa kết nối Supabase.');
-
-    const { data: task } = await runQuery(
-      supabase
-        .from('facebook_tasks')
-        .select('*')
-        .eq('id', taskId)
-        .single(),
-    );
-
-    if (!task) throw new Error('Không tìm thấy nhiệm vụ.');
-
-    const remainingQty = Math.max(0, task.target_quantity - task.completed_quantity);
-    const refundAmount = remainingQty * Number(task.unit_price);
-
-    await runQuery(
-      supabase
-        .from('facebook_tasks')
-        .update({ status: 'cancelled' })
-        .eq('id', taskId),
-    );
-
-    if (refundAmount > 0) {
-      const walletInfo = await WalletService.getWalletInfo(creatorId);
-      const newBalance = walletInfo.walletBalance + refundAmount;
-
-      await runQuery(
-        supabase
-          .from('customers')
-          .update({ wallet_balance: newBalance })
-          .eq('id', creatorId),
-      );
-
-      await supabase.from('wallet_transactions').insert([{
-        customer_id: creatorId,
-        transaction_type: 'refund',
-        amount: refundAmount,
-        status: 'completed',
-        description: `Hoàn tiền hủy nhiệm vụ FB #${taskId.slice(0, 8)}`,
-      }]);
-    }
-
-    return { success: true, refundAmount };
+  async cancelTask(taskId) {
+    return await apiClient.post(`/facebook-tasks/${taskId}/cancel`);
   },
 };

@@ -1,6 +1,7 @@
 import { Modal } from './Modal.js';
 import { Toast } from './Toast.js';
 import { FacebookApiService } from '../services/FacebookApiService.js';
+import { FacebookAuthService } from '../services/FacebookAuthService.js';
 import { CustomerService } from '../services/CustomerService.js';
 import { escapeHtml } from '../utils/html.js';
 
@@ -37,6 +38,18 @@ export const FacebookVerificationModal = {
               </div>
             </div>
           </div>
+
+          <div class="fb-oauth-section">
+            <button class="btn-primary btn-facebook-login" type="button" id="fb-oauth-login-btn">
+              <span class="fb-logo-icon">🔷</span> Đăng nhập Facebook để xác thực tự động
+            </button>
+            <div class="muted-text fb-oauth-hint">
+              Cách này lấy Tên &amp; số bạn bè trực tiếp từ Facebook Graph API — chính xác, không thể khai khống.
+            </div>
+            <div id="fb-oauth-result-outlet"></div>
+          </div>
+
+          <div class="fb-verify-divider"><span>hoặc nhập thủ công</span></div>
 
           <form id="fb-verify-form" class="modal-form" novalidate>
             <div id="fb-verify-error" class="form-error hidden"></div>
@@ -87,6 +100,70 @@ export const FacebookVerificationModal = {
 
     verifyInput?.addEventListener('input', updateDetectedInfo);
     updateDetectedInfo();
+
+    // Authoritative path: OAuth login → BE verifies via Graph API.
+    const oauthBtn = document.getElementById('fb-oauth-login-btn');
+    if (!FacebookAuthService.isConfigured()) {
+      if (oauthBtn) {
+        oauthBtn.disabled = true;
+        oauthBtn.title = 'Chưa cấu hình Facebook App ID.';
+      }
+      const hint = document.querySelector('.fb-oauth-hint');
+      if (hint) {
+        hint.textContent = 'Chưa cấu hình Facebook App ID — dùng cách nhập thủ công bên dưới, hoặc thêm facebook.appId vào config.local.js.';
+      }
+    }
+
+    oauthBtn?.addEventListener('click', async () => {
+      const outlet = document.getElementById('fb-oauth-result-outlet');
+      oauthBtn.disabled = true;
+      const originalText = oauthBtn.innerHTML;
+      oauthBtn.textContent = 'Đang kết nối Facebook...';
+      try {
+        // Logged-in profile (has customerId) → persist on the server.
+        // Registration (no customerId, no session) → preview-only, saved later.
+        const result = customerId
+          ? await FacebookAuthService.verifyProfile()
+          : await FacebookAuthService.verifyProfilePreview();
+        if (outlet) {
+          outlet.innerHTML = `
+            <div class="status-result-box success">
+              <div class="status-icon">✅</div>
+              <div class="status-title">Đã xác thực qua Facebook!</div>
+              <div class="status-desc">
+                Facebook Name: <strong>${escapeHtml(result?.facebookName || '')}</strong><br/>
+                Bạn bè: <strong class="text-gold">${result?.friendCount ?? 0}</strong>
+              </div>
+            </div>
+          `;
+        }
+        // Normalize to the shape callers (RegisterPage.onVerified) expect.
+        const normalized = {
+          verified: true,
+          name: result?.facebookName || '',
+          facebookId: result?.facebookId || '',
+          friendCount: result?.friendCount ?? 0,
+          followerCount: 0,
+        };
+        Toast.show('Đã xác thực tài khoản Facebook thành công!');
+        setTimeout(async () => {
+          Modal.close();
+          await onVerified?.(normalized);
+        }, 1200);
+      } catch (err) {
+        oauthBtn.disabled = false;
+        oauthBtn.innerHTML = originalText;
+        if (outlet) {
+          outlet.innerHTML = `
+            <div class="status-result-box warning">
+              <div class="status-icon">⚠️</div>
+              <div class="status-desc">${escapeHtml(err?.message || 'Lỗi đăng nhập Facebook.')}</div>
+            </div>
+          `;
+        }
+        Toast.show(err?.message || 'Lỗi đăng nhập Facebook.');
+      }
+    });
 
     const form = document.getElementById('fb-verify-form');
     form?.addEventListener('submit', async (e) => {

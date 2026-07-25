@@ -12,6 +12,7 @@ export const PAGE_TITLES = {
   settings: 'Cài đặt hệ thống',
   register: 'Đăng ký Kiosk',
   'registration-requests': 'Duyệt đơn đăng ký',
+  'task-review': 'Duyệt bằng chứng nhiệm vụ',
   staff: 'Quản lý Tài khoản',
   reports: 'Báo cáo Doanh thu',
   profile: 'Tài khoản & Xác thực FB',
@@ -63,6 +64,7 @@ export const ADMIN_NAV_SECTIONS = [
     label: 'Duyệt & Phân quyền',
     items: [
       { route: 'registration-requests', label: 'Duyệt đăng ký', icon: '✅' },
+      { route: 'task-review', label: 'Duyệt nhiệm vụ FB', icon: '🔍' },
       { route: 'staff', label: 'Nhân viên', icon: '🛡️' },
     ],
   },

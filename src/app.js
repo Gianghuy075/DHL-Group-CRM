@@ -23,6 +23,7 @@ import { LoginPage } from './pages/LoginPage.js';
 import { RegistrationRequestsPage } from './pages/RegistrationRequestsPage.js';
 import { StaffPage } from './pages/StaffPage.js';
 import { FacebookTasksPage } from './pages/FacebookTasksPage.js';
+import { TaskReviewPage } from './pages/TaskReviewPage.js';
 import { AccountPage } from './pages/AccountPage.js';
 
 const routes = {
@@ -33,6 +34,7 @@ const routes = {
   'kiosk-detail': KioskDetailPage,
   payments: PaymentsPage,
   'facebook-tasks': FacebookTasksPage,
+  'task-review': TaskReviewPage,
   categories: CategoriesPage,
   'business-types': BusinessTypesPage,
   logs: LogsPage,
