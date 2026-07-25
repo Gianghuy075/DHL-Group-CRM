@@ -1,19 +1,16 @@
 // Thin fetch wrapper around the NestJS backend.
 // Base URL comes from window.DHL_CONFIG.apiBaseUrl (config.local.js).
-import { getSupabaseClient } from '../supabase/client.js';
 
 function getApiBaseUrl() {
   const base = window.DHL_CONFIG?.apiBaseUrl || '';
   return base.replace(/\/$/, '');
 }
 
-// The BE verifies the Supabase access token; attach it on every request.
-async function getAccessToken() {
-  const client = getSupabaseClient();
-  if (!client) return null;
+// The BE verifies our own HS256 JWT; read it straight from localStorage.
+// (Imported lazily-free to avoid a circular import with AuthService.)
+function getAccessToken() {
   try {
-    const { data } = await client.auth.getSession();
-    return data?.session?.access_token || null;
+    return localStorage.getItem('dhl_token') || null;
   } catch {
     return null;
   }

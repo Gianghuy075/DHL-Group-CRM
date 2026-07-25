@@ -2,6 +2,7 @@ import { EmptyState } from '../components/EmptyState.js';
 import { openKioskForm } from '../components/KioskForm.js';
 import { PageHeader } from '../components/PageHeader.js';
 import { openRenewKioskForm } from '../components/RenewKioskForm.js';
+import { KioskPurchaseModal } from '../components/KioskPurchaseModal.js';
 import { Toolbar } from '../components/Toolbar.js';
 import { AuthService } from '../services/AuthService.js';
 import { BusinessTypeService } from '../services/BusinessTypeService.js';
@@ -28,13 +29,17 @@ const state = {
   total: 0,
   requestId: 0,
   businessTypes: [],
+  currentProfile: null,
 };
 
 export function KiosksPage() {
   return `
     ${PageHeader({
       title: 'Quản lý Kiosk',
-      actions: '<button class="btn-primary" id="add-kiosk-button" type="button">+ Thêm Kiosk</button>',
+      actions: `
+        <button class="btn-secondary" id="buy-kiosk-button" type="button">🛒 Mua gói Kiosk</button>
+        <button class="btn-primary" id="add-kiosk-button" type="button">+ Thêm Kiosk</button>
+      `,
     })}
     ${Toolbar({
       children: `
@@ -103,6 +108,25 @@ function bindKioskEvents() {
         state.status = 'pending';
         state.page = 1;
         syncKioskControls();
+        await loadKiosks();
+      },
+    });
+  });
+
+  document.getElementById('buy-kiosk-button')?.addEventListener('click', async () => {
+    let profile = state.currentProfile;
+    if (!profile) {
+      const session = await AuthService.getCurrentSession();
+      profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+    }
+    if (!profile?.id) {
+      return;
+    }
+    KioskPurchaseModal.open({
+      customerId: profile.id,
+      customerName: profile.display_name || '',
+      onPurchased: async () => {
+        state.page = 1;
         await loadKiosks();
       },
     });
@@ -183,6 +207,7 @@ async function loadKiosks() {
   try {
     const session = await AuthService.getCurrentSession();
     const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+    state.currentProfile = profile;
     const customerId = profile?.role === 'user' ? session?.user?.id : undefined;
 
     const { data, count } = await KioskService.list({

@@ -19,7 +19,7 @@ export function StaffPage() {
     </div>
     <div class="table-card">
       <table class="data-table staff-table">
-        <thead><tr><th>Nhân viên</th><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Đăng nhập gần nhất</th><th>Thao tác</th></tr></thead>
+        <thead><tr><th>Nhân viên</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
         <tbody id="staff-table-body">${stateRow('Đang tải nhân viên', 'Đang đọc dữ liệu tài khoản.')}</tbody>
       </table>
     </div>
@@ -65,10 +65,8 @@ function renderRows() {
   body.innerHTML = state.staff.map((item) => `
     <tr>
       <td><strong>${escapeHtml(item.displayName || '—')}</strong><br><span class="muted-text">@${escapeHtml(item.username || '—')}</span></td>
-      <td>${escapeHtml(item.email || '—')}</td>
       <td>${item.role === 'admin' ? 'Admin' : 'Kiểm duyệt'}</td>
       <td><span class="badge badge-${item.isActive ? 'active' : 'inactive'}">${item.isActive ? 'Hoạt động' : 'Đã khóa'}</span></td>
-      <td>${formatDateTime(item.lastSignInAt)}</td>
       <td>${staffActions(item)}</td>
     </tr>
   `).join('');
@@ -76,12 +74,11 @@ function renderRows() {
 
 function staffActions(item) {
   if (item.role !== 'reviewer') return '—';
-  const deleteDisabled = Number(item.reviewedCount || 0) > 0;
   return `<div class="staff-actions">
     <button class="btn-secondary compact-button" type="button" data-edit-staff="${item.userId}">Sửa</button>
     <button class="btn-secondary compact-button" type="button" data-reset-password="${item.userId}">Mật khẩu</button>
     <button class="${item.isActive ? 'table-cancel-button' : 'table-approve-button'}" type="button" data-toggle-staff="${item.userId}">${item.isActive ? 'Khóa' : 'Mở'}</button>
-    <button class="table-cancel-button" type="button" data-delete-staff="${item.userId}" ${deleteDisabled ? 'disabled title="Nhân viên đã có lịch sử duyệt đơn; hãy khóa tài khoản thay vì xóa."' : ''}>Xóa</button>
+    <button class="table-cancel-button" type="button" data-delete-staff="${item.userId}">Xóa</button>
   </div>`;
 }
 
@@ -91,10 +88,7 @@ function openCreateDialog() {
     body: `
       <form id="create-staff-form">
         <label class="form-group"><span>Họ và tên</span><input class="form-control" name="displayName" required maxlength="100" autocomplete="name"></label>
-        <div class="form-row">
-          <label class="form-group"><span>Username</span><input class="form-control" name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
-          <label class="form-group"><span>Email</span><input class="form-control" name="email" type="email" required autocomplete="email"></label>
-        </div>
+        <label class="form-group"><span>Username</span><input class="form-control" name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._-]+" autocomplete="off"></label>
         <label class="form-group"><span>Mật khẩu ban đầu</span><input class="form-control" name="password" type="password" required minlength="6" autocomplete="new-password"></label>
         <p class="muted-text">Tài khoản do admin tạo được kích hoạt ngay và chỉ có quyền duyệt đơn.</p>
         <div class="modal-actions"><button class="btn-secondary" type="button" data-cancel-staff>Hủy</button><button class="btn-primary" type="submit">Tạo tài khoản</button></div>
@@ -133,10 +127,7 @@ function openEditDialog(userId) {
     body: `
       <form id="edit-staff-form">
         <label class="form-group"><span>Họ và tên</span><input class="form-control" name="displayName" required maxlength="100" value="${escapeHtml(staff.displayName || '')}" autocomplete="name"></label>
-        <div class="form-row">
-          <label class="form-group"><span>Username</span><input class="form-control" name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._-]+" value="${escapeHtml(staff.username || '')}" autocomplete="off"></label>
-          <label class="form-group"><span>Email</span><input class="form-control" name="email" type="email" required value="${escapeHtml(staff.email || '')}" autocomplete="email"></label>
-        </div>
+        <label class="form-group"><span>Username</span><input class="form-control" name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._-]+" value="${escapeHtml(staff.username || '')}" autocomplete="off"></label>
         <div class="modal-actions"><button class="btn-secondary" type="button" data-cancel-staff>Hủy</button><button class="btn-primary" type="submit">Lưu thay đổi</button></div>
       </form>`,
   });
@@ -185,7 +176,7 @@ async function toggleStaff(userId) {
 async function deleteStaff(userId) {
   if (state.busy) return;
   const staff = state.staff.find((item) => item.userId === userId && item.role === 'reviewer');
-  if (!staff || Number(staff.reviewedCount || 0) > 0) return;
+  if (!staff) return;
   const confirmation = window.prompt(`Nhập username "${staff.username}" để xóa vĩnh viễn tài khoản:`)?.trim();
   if (confirmation !== staff.username) {
     if (confirmation !== undefined && confirmation !== null) window.alert('Username xác nhận chưa đúng.');
@@ -247,11 +238,6 @@ function setFormBusy(form, busy) {
   form?.querySelectorAll('input, button').forEach((element) => { element.disabled = busy; });
 }
 
-function formatDateTime(value) {
-  if (!value) return 'Chưa đăng nhập';
-  return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
-}
-
 function stateRow(title, message) {
-  return `<tr><td colspan="6">${EmptyState({ title, message: escapeHtml(message) })}</td></tr>`;
+  return `<tr><td colspan="4">${EmptyState({ title, message: escapeHtml(message) })}</td></tr>`;
 }

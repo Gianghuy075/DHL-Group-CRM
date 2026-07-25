@@ -6,13 +6,13 @@ export function LoginPage({ message = '' } = {}) {
     <main class="auth-shell">
       <section class="auth-card">
         <div class="auth-logo">🏪</div>
-        <h1>Đăng nhập quản trị</h1>
+        <h1>Đăng nhập</h1>
         <p>Hệ thống quản lý Kiosk · Diễn Châu - À Đây Rồi</p>
         <div id="login-error" class="form-error ${message ? '' : 'hidden'}">${escapeHtml(message)}</div>
         <form id="login-form" novalidate>
           <label class="form-group">
-            <span>Email</span>
-            <input id="login-email" class="form-control" type="email" autocomplete="email" required />
+            <span>Tên đăng nhập</span>
+            <input id="login-username" class="form-control" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
           </label>
           <label class="form-group">
             <span>Mật khẩu</span>
@@ -20,7 +20,7 @@ export function LoginPage({ message = '' } = {}) {
           </label>
           <button id="login-submit" class="btn-primary auth-submit" type="submit">Đăng nhập</button>
         </form>
-        <a class="public-register-link" href="#/register" data-open-register>Đăng ký kiosk trực tuyến</a>
+        <a class="public-register-link" href="#/register" data-open-register>Chưa có tài khoản? Đăng ký</a>
       </section>
     </main>
   `;
@@ -35,13 +35,13 @@ LoginPage.afterRender = function afterRenderLogin() {
 
   document.getElementById('login-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const email = document.getElementById('login-email')?.value.trim();
+    const username = document.getElementById('login-username')?.value.trim();
     const password = document.getElementById('login-password')?.value || '';
     const button = document.getElementById('login-submit');
     const errorElement = document.getElementById('login-error');
 
-    if (!email || !password) {
-      showError(errorElement, 'Vui lòng nhập email và mật khẩu.');
+    if (!username || !password) {
+      showError(errorElement, 'Vui lòng nhập tên đăng nhập và mật khẩu.');
       return;
     }
 
@@ -49,14 +49,11 @@ LoginPage.afterRender = function afterRenderLogin() {
     errorElement?.classList.add('hidden');
 
     try {
-      await AuthService.signIn(email, password);
+      await AuthService.signInWithUsername(username, password);
       window.location.hash = '#/dashboard';
       window.location.reload();
     } catch (error) {
-      const message = error?.message === 'Email not confirmed'
-        ? 'Email chưa được xác nhận. Vui lòng mở email Supabase và bấm liên kết xác nhận.'
-        : 'Email hoặc mật khẩu không đúng.';
-      showError(errorElement, message);
+      showError(errorElement, error?.message || 'Sai tên đăng nhập hoặc mật khẩu.');
       setLoading(button, false);
     }
   });

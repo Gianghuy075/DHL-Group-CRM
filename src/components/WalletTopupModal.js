@@ -75,6 +75,7 @@ function renderTopupStep1() {
 
         <div class="modal-actions">
           <button class="btn-secondary" type="button" id="wallet-topup-close-btn">Hủy</button>
+          <button class="btn-secondary" type="button" id="wallet-topup-dev-btn" title="Nạp thẳng vào ví, bỏ qua PayOS (chỉ dùng để test)">⚡ Đã thanh toán (dev)</button>
           <button class="btn-primary" type="button" id="wallet-topup-submit-btn">
             Tạo Mã Nạp ➔
           </button>
@@ -110,6 +111,50 @@ function renderTopupStep1() {
   });
 
   document.getElementById('wallet-topup-close-btn')?.addEventListener('click', Modal.close);
+
+  // DEV: nạp thẳng vào ví, bỏ qua PayOS (BE chặn ở production).
+  document.getElementById('wallet-topup-dev-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('wallet-topup-dev-btn');
+    const amount = Number(activeTopupState.selectedAmount || 0);
+    if (!amount || amount < 1) {
+      Toast.show('Vui lòng nhập số tiền nạp hợp lệ.');
+      return;
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Đang nạp...';
+    }
+    try {
+      const result = await WalletService.devCredit(amount);
+      WalletTopupModal.stopPolling();
+      Modal.open({
+        title: '🎉 Nạp Ví (dev) Thành Công!',
+        body: `
+          <div class="status-result-box success">
+            <div class="status-icon">✅</div>
+            <div class="status-title">Đã cộng tiền vào ví (dev)</div>
+            <div class="status-desc">
+              Số tiền nạp: <strong>${formatCurrency(amount)}</strong><br/>
+              Số dư Ví mới: <strong class="text-gold">${formatCurrency(result?.wallet_balance ?? amount)}</strong>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-primary" type="button" id="topup-dev-done-btn">Đóng</button>
+          </div>
+        `,
+      });
+      document.getElementById('topup-dev-done-btn')?.addEventListener('click', async () => {
+        Modal.close();
+        await activeTopupState.onTopupSuccess?.();
+      });
+    } catch (err) {
+      Toast.show(err?.message || 'Không thể nạp ví (dev).');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '⚡ Đã thanh toán (dev)';
+      }
+    }
+  });
 
   document.getElementById('wallet-topup-submit-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('wallet-topup-submit-btn');
@@ -152,6 +197,19 @@ function getQrCodeImageUrl(qrCode) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCode)}`;
 }
 
+/**
+ * Abandons the current pending PayOS order (user closed / went back). Stops the
+ * poll and fires a best-effort void so it doesn't linger as "Chờ thanh toán".
+ * Clears payosInfo so it can never be cancelled twice (back + onClose).
+ */
+function cancelActivePayosOrder() {
+  WalletTopupModal.stopPolling();
+  const orderCode = activeTopupState?.payosInfo?.orderCode;
+  if (!orderCode) return;
+  activeTopupState.payosInfo = null;
+  WalletService.cancelDeposit({ orderCode });
+}
+
 function renderTopupStep2QR() {
   const { payosInfo, selectedAmount } = activeTopupState;
 
@@ -163,6 +221,8 @@ function renderTopupStep2QR() {
   Modal.open({
     title: 'Cổng Thanh Toán Tự Động',
     className: 'modal-payos',
+    // Closing the QR screen (× / overlay / Esc) voids the pending PayOS order.
+    onClose: cancelActivePayosOrder,
     body: `
       <div class="wallet-topup-container">
         <div class="payos-qr-wrapper">
@@ -223,7 +283,11 @@ function renderTopupStep2QR() {
     });
   });
 
-  document.getElementById('topup-step2-back')?.addEventListener('click', renderTopupStep1);
+  document.getElementById('topup-step2-back')?.addEventListener('click', () => {
+    // Going back abandons this order → void it on PayOS, then re-pick an amount.
+    cancelActivePayosOrder();
+    renderTopupStep1();
+  });
 
   document.getElementById('topup-step2-confirm')?.addEventListener('click', () => {
     handleConfirmTopup(true);
@@ -289,6 +353,19 @@ async function handleConfirmTopup(manualClick = false) {
 async function executeWalletDepositCredit() {
   const { customerId, payosInfo, selectedAmount, selectedBonus, onTopupSuccess } = activeTopupState;
 
+  // Opening this loading modal also clears the QR screen's onClose hook, so the
+  // now-paid order is never voided while we credit it.
+  Modal.open({
+    title: '⏳ Đang xác nhận thanh toán',
+    body: `
+      <div class="status-result-box">
+        <div class="payos-loading-spinner"></div>
+        <div class="status-title">Đang xử lý giao dịch...</div>
+        <div class="status-desc">Hệ thống đang xác nhận thanh toán và cộng tiền vào Ví. Vui lòng không đóng cửa sổ này.</div>
+      </div>
+    `,
+  });
+
   try {
     const result = await WalletService.confirmDeposit({
       orderCode: payosInfo.orderCode,
@@ -318,6 +395,8 @@ async function executeWalletDepositCredit() {
     });
 
   } catch (err) {
-    Toast.show(err?.message || 'Lỗi khi cộng tiền ví.');
+    Toast.show(err?.message || 'Lỗi khi cộng tiền ví. Vui lòng thử lại.');
+    // Restore the QR screen (re-arms polling + onClose) so the user can retry.
+    renderTopupStep2QR();
   }
 }

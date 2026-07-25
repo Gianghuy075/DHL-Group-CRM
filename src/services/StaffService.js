@@ -1,45 +1,36 @@
-import { getSupabaseClient } from '../supabase/client.js';
+import { apiClient } from './apiClient.js';
 
+// Talks to the NestJS backend (/staff). Admin-only reviewer management.
+// Replaces the old Supabase `manage-staff` edge function (self-managed JWT now).
 export const StaffService = {
   async list() {
-    return invoke({ action: 'list' });
+    return apiClient.get('/staff');
   },
 
   async create(payload) {
-    return invoke({ action: 'create', ...payload });
+    return apiClient.post('/staff', {
+      displayName: payload.displayName,
+      username: payload.username,
+      password: payload.password,
+    });
   },
 
   async resetPassword(userId, password) {
-    return invoke({ action: 'reset_password', userId, password });
+    return apiClient.patch(`/staff/${userId}/password`, { password });
   },
 
   async update(userId, payload) {
-    return invoke({ action: 'update', userId, ...payload });
+    return apiClient.patch(`/staff/${userId}`, {
+      displayName: payload.displayName,
+      username: payload.username,
+    });
   },
 
   async setActive(userId, isActive) {
-    return invoke({ action: 'set_active', userId, isActive });
+    return apiClient.patch(`/staff/${userId}/active`, { isActive });
   },
 
   async remove(userId) {
-    return invoke({ action: 'delete', userId });
+    return apiClient.del(`/staff/${userId}`);
   },
 };
-
-async function invoke(body) {
-  const client = getSupabaseClient();
-  if (!client) throw new Error('Supabase chưa được cấu hình.');
-  const { data, error } = await client.functions.invoke('manage-staff', { body });
-  if (error) throw new Error(await edgeErrorMessage(error));
-  if (!data?.ok) throw new Error(data?.message || 'Không thể quản lý nhân viên.');
-  return data;
-}
-
-async function edgeErrorMessage(error) {
-  try {
-    const payload = await error.context?.json();
-    return payload?.message || error.message;
-  } catch {
-    return error.message || 'Edge Function trả về lỗi.';
-  }
-}

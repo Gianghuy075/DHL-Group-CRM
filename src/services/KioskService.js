@@ -58,6 +58,16 @@ export const KioskService = {
   async setStatus(id, status) {
     return apiClient.patch(`/kiosks/${id}/status`, { status });
   },
+
+  // Người dùng mua gói Kiosk, trừ trực tiếp từ Ví (POST /kiosks/purchase).
+  async purchase({ businessTypeId, months, facebookName, facebookLink } = {}) {
+    return apiClient.post('/kiosks/purchase', {
+      businessTypeId,
+      months: Number(months),
+      facebookName,
+      facebookLink,
+    });
+  },
 };
 
 function pickKioskPayload(kiosk = {}) {

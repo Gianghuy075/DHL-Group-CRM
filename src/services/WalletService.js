@@ -76,6 +76,19 @@ export const WalletService = {
   },
 
   /**
+   * DEV ONLY: credits the wallet instantly without going through PayOS.
+   * Backed by POST /wallet/dev/credit (blocked in production on the BE).
+   * Dùng để test nhanh luồng nạp tiền → mua gói Kiosk.
+   */
+  async devCredit(amount) {
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount < 1) {
+      throw new Error('Số tiền nạp (dev) không hợp lệ.');
+    }
+    return await apiClient.post('/wallet/dev/credit', { amount: numericAmount });
+  },
+
+  /**
    * Polls the backend for a topup's payment status (server re-checks PayOS).
    */
   async checkTopupStatus(orderCode) {
@@ -95,6 +108,20 @@ export const WalletService = {
   async confirmDeposit({ orderCode }) {
     if (!orderCode) throw new Error('Thiếu mã đơn nạp.');
     return await apiClient.post(`/wallet/confirm/${orderCode}`);
+  },
+
+  /**
+   * Voids a pending deposit on PayOS when the user abandons the QR screen.
+   * Best-effort (fire-and-forget from the UI): never throws, so leaving the
+   * modal is never blocked by a network hiccup.
+   */
+  async cancelDeposit({ orderCode }) {
+    if (!orderCode) return { cancelled: false };
+    try {
+      return await apiClient.post(`/wallet/cancel/${orderCode}`);
+    } catch {
+      return { cancelled: false };
+    }
   },
 
   /**

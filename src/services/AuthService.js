@@ -1,52 +1,78 @@
-import { getSupabaseClient } from '../supabase/client.js';
+// Self-managed auth against the NestJS backend (username + password → HS256 JWT).
+// The token is stored in localStorage and attached by apiClient on every request.
+// Supabase Auth is no longer used.
+import { apiClient } from './apiClient.js';
+
+const TOKEN_KEY = 'dhl_token';
+
+export function getToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function setToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+let cachedProfile = null;
 
 export const AuthService = {
+  // Returns a minimal session ({ user: { id } }) when a valid token exists,
+  // otherwise null. Also caches the profile for getCurrentProfile().
   async initialize() {
-    const client = requireClient();
-    const authHash = /(?:^#|[&#])(access_token|refresh_token|error|error_code)=/.test(window.location.hash);
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-
-    if (authHash) {
-      const nextRoute = data.session ? '#/dashboard' : '#/login';
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${nextRoute}`);
+    const token = getToken();
+    if (!token) return null;
+    try {
+      cachedProfile = await apiClient.get('/auth/me');
+      return { user: { id: cachedProfile.id } };
+    } catch {
+      setToken(null);
+      cachedProfile = null;
+      return null;
     }
-
-    return data.session || null;
   },
 
   async getCurrentSession() {
-    const client = requireClient();
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    return data.session || null;
+    const token = getToken();
+    if (!token) return null;
+    return { user: { id: cachedProfile?.id } };
   },
 
-  async signIn(email, password) {
-    const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+  async signInWithUsername(username, password) {
+    const result = await apiClient.post('/auth/login', { username, password });
+    setToken(result.token);
+    cachedProfile = null;
+    return result;
+  },
+
+  async register({ username, displayName, password }) {
+    const result = await apiClient.post('/auth/register', {
+      username,
+      displayName,
+      password,
+    });
+    setToken(result.token);
+    cachedProfile = null;
+    return result;
   },
 
   async signOut() {
-    const { error } = await requireClient().auth.signOut();
-    if (error) throw error;
+    setToken(null);
+    cachedProfile = null;
   },
 
-  async getCurrentProfile(userId) {
-    if (!userId) return null;
-    const { data, error } = await requireClient()
-      .from('user_roles')
-      .select('user_id, username, display_name, role, is_active')
-      .eq('user_id', userId)
-      .single();
-    if (error) throw error;
-    return data;
+  // eslint-disable-next-line no-unused-vars
+  async getCurrentProfile(_userId) {
+    if (cachedProfile) return cachedProfile;
+    cachedProfile = await apiClient.get('/auth/me');
+    return cachedProfile;
   },
 };
-
-function requireClient() {
-  const client = getSupabaseClient();
-  if (!client) throw new Error('Supabase chưa được cấu hình.');
-  return client;
-}
