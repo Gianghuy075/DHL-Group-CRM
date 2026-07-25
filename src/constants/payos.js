@@ -1,9 +1,9 @@
 function readPayOSConfig() {
   const custom = window.DHL_CONFIG?.payos || {};
   return {
-    clientId: (custom.clientId || '9cf9982b-46e0-44df-a7b3-c43a27303bb0').trim(),
-    apiKey: (custom.apiKey || 'eed33900-3e06-4963-835e-968dbc8aec18').trim(),
-    checksumKey: (custom.checksumKey || 'da9ff359d5a66c705e7e5f94fb90719c327d983ce91f831fe7ef1c1b688dc143').trim(),
+    clientId: (custom.clientId || 'd3bd8cc4-fa2e-40f5-b7b1-efd785d8ac35').trim(),
+    apiKey: (custom.apiKey || 'b645a53a-2129-4124-b176-6dacc7812ff8').trim(),
+    checksumKey: (custom.checksumKey || 'd33706f71df302a15c0374173beee1af67ddc5f293701e6a9dfb67fa49eb74a0').trim(),
     apiEndpoint: (custom.apiEndpoint || 'https://api-merchant.payos.vn/v2').trim(),
   };
 }
