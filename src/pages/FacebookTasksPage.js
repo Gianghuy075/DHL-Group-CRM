@@ -330,6 +330,7 @@ function renderTaskCard(task) {
  */
 function renderCreateTaskTab(container) {
   const { taskType, postUrl, targetQuantity, unitPrice, note } = state.createTaskForm;
+  const selectedTypeObj = TASK_TYPES.find((t) => t.id === taskType) || TASK_TYPES[0];
   const totalCost = Number(targetQuantity || 0) * Number(unitPrice || 0);
   const totalAvailable = state.walletInfo.totalAvailable;
   const hasEnoughMoney = totalAvailable >= totalCost;
@@ -343,30 +344,25 @@ function renderCreateTaskTab(container) {
         <div id="create-task-error" class="form-error hidden"></div>
 
         <div class="form-group">
-          <span>1. Chọn loại hình tương tác Facebook *</span>
-          <div class="task-type-selector">
-            ${TASK_TYPES.map((t) => `
-              <label class="task-type-option ${t.id === taskType ? 'selected' : ''}">
-                <input type="radio" name="create-task-type" value="${t.id}" ${t.id === taskType ? 'checked' : ''} />
-                <span class="type-icon">${t.icon}</span>
-                <span class="type-name">${t.name}</span>
-              </label>
-            `).join('')}
+          <span class="form-label">Dịch vụ tương tác:</span>
+          <div class="active-type-badge-box">
+            <span class="type-icon">${selectedTypeObj.icon}</span>
+            <strong class="type-name">${selectedTypeObj.name}</strong>
           </div>
         </div>
 
         <label class="form-group">
-          <span>2. Đường dẫn Facebook (URL Bài viết / Trang cá nhân / Fanpage) *</span>
+          <span>Đường dẫn Facebook (URL Bài viết / Trang cá nhân / Fanpage) *</span>
           <input class="form-control" id="create-task-url" type="url" placeholder="https://www.facebook.com/..." value="${escapeHtml(postUrl)}" required />
         </label>
 
         <div class="form-row">
           <label class="form-group">
-            <span>3. Số lượng tương tác cần mua *</span>
+            <span>Số lượng tương tác cần mua *</span>
             <input class="form-control" id="create-task-qty" type="number" min="1" step="10" value="${targetQuantity}" required />
           </label>
           <label class="form-group">
-            <span>4. Đơn giá trả thưởng / lượt (VNĐ) *</span>
+            <span>Đơn giá trả thưởng / lượt (VNĐ) *</span>
             <input class="form-control" id="create-task-price" type="number" min="100" step="100" value="${unitPrice}" required />
           </label>
         </div>
@@ -403,16 +399,6 @@ function renderCreateTaskTab(container) {
       </form>
     </div>
   `;
-
-  // Bind Radio Change
-  container.querySelectorAll('input[name="create-task-type"]').forEach((radio) => {
-    radio.addEventListener('change', (e) => {
-      state.createTaskForm.taskType = e.target.value;
-      const typeObj = TASK_TYPES.find((t) => t.id === e.target.value);
-      if (typeObj) state.createTaskForm.unitPrice = typeObj.defaultPrice;
-      renderCreateTaskTab(container);
-    });
-  });
 
   container.getElementById('create-task-url')?.addEventListener('input', (e) => { state.createTaskForm.postUrl = e.target.value; });
   container.getElementById('create-task-qty')?.addEventListener('input', (e) => {
