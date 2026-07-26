@@ -813,6 +813,21 @@ textarea {
   outline: none;
 }
 
+select option,
+.form-control option,
+.filter-select option {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  padding: 10px;
+}
+
+select option:checked,
+.form-control option:checked,
+.filter-select option:checked {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
 .toolbar .form-control {
   flex: 1 1 280px;
 }
