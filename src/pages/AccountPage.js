@@ -212,33 +212,21 @@ function renderAccountContent() {
 
         <form id="facebook-verify-form" class="account-form ${isVerified ? 'hidden' : ''}">
           <label class="form-group">
-            <span>Link Facebook cá nhân (URL) *</span>
+            <span>Dán Đường dẫn Facebook Cá nhân (URL) *</span>
             <input
               class="form-control"
               id="account-facebook-url"
               type="url"
-              placeholder="https://www.facebook.com/hguhys"
+              placeholder="https://www.facebook.com/100088812345678"
               value="${escapeHtml(customer?.facebook_link || '')}"
               required
             />
           </label>
 
-          <label class="form-group">
-            <span>Tên hiển thị trên Facebook *</span>
-            <input
-              class="form-control"
-              id="account-facebook-name"
-              type="text"
-              placeholder="Giang Tuấn Huy"
-              value="${escapeHtml(customer?.facebook_name && customer.facebook_name !== 'Nguyen Van User1' ? customer.facebook_name : '')}"
-              required
-            />
-          </label>
-
           <div class="form-group" id="facebook-id-preview-box">
-            <span class="form-label">Mã Facebook ID dạng số (Numeric UID 1000...):</span>
+            <span class="form-label">Mã Facebook ID dạng số (UID 1000...):</span>
             <div class="id-preview-val code-text" id="account-facebook-id-text">
-              ${customer?.facebook_id ? escapeHtml(customer.facebook_id) : 'Nhập link Facebook'}
+              ${customer?.facebook_id ? escapeHtml(customer.facebook_id) : 'Dán link Facebook để tự động nhận diện...'}
             </div>
           </div>
 
@@ -295,20 +283,18 @@ function renderAccountContent() {
 
 async function handleFacebookVerification() {
   const urlInput = document.getElementById('account-facebook-url');
-  const nameInput = document.getElementById('account-facebook-name');
   const submitBtn = document.getElementById('verify-submit-btn');
 
   const fbUrl = urlInput?.value?.trim();
-  const realName = nameInput?.value?.trim() || '';
 
   if (!fbUrl) {
-    Toast.show('Vui lòng dán Link Facebook cá nhân để quét.');
+    Toast.show('Vui lòng dán Link Facebook cá nhân để tự động quét.');
     return;
   }
 
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.textContent = '🔍 Đang quét số lượng bạn bè & Chế độ Công khai...';
+    submitBtn.textContent = '🔍 Đang tự động quét & trích xuất thông tin Facebook...';
   }
 
   try {
@@ -319,12 +305,12 @@ async function handleFacebookVerification() {
       return;
     }
 
-    const { friendCount = 0, name = realName, facebookId } = verifyResult;
+    const { friendCount = 0, name = 'Khách hàng Facebook', facebookId } = verifyResult;
 
-    // Lưu vĩnh viễn kết quả xác thực vào Supabase Database bảng `customers`
+    // Lưu vĩnh viễn kết quả tự động xác thực vào Supabase Database bảng `customers`
     const updatedPayload = {
       id: state.customer.id,
-      facebook_name: name || realName,
+      facebook_name: name,
       facebook_id: facebookId,
       facebook_link: fbUrl,
       facebook_verified: true,
@@ -337,17 +323,17 @@ async function handleFacebookVerification() {
 
     await CustomerService.upsert(updatedPayload);
 
-    Toast.show(`🎉 Đã quét & xác thực thành công tài khoản Facebook "${name}" (ID Số: ${facebookId}) — ${friendCount.toLocaleString()} Bạn bè!`);
+    Toast.show(`🎉 Tự động xác thực thành công: Tên "${name}" (ID Số: ${facebookId}) — ${friendCount.toLocaleString()} Bạn bè!`);
 
     await loadAccountData();
     renderAccountContent();
 
   } catch (err) {
-    Toast.show(err?.message || 'Lỗi khi xác thực tài khoản Facebook.');
+    Toast.show(err?.message || 'Lỗi khi tự động quét tài khoản Facebook.');
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = '🛡️ Tiến hành Xác thực Facebook qua Graph API ➔';
+      submitBtn.textContent = '🔍 Quét & Xác thực Facebook Tự động ➔';
     }
   }
 }
