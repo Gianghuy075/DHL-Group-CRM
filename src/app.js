@@ -25,6 +25,9 @@ import { StaffPage } from './pages/StaffPage.js';
 import { FacebookTasksPage } from './pages/FacebookTasksPage.js';
 import { TaskReviewPage } from './pages/TaskReviewPage.js';
 import { AccountPage } from './pages/AccountPage.js';
+import { WalletService } from './services/WalletService.js';
+import { WalletTopupModal } from './components/WalletTopupModal.js';
+import { formatCurrency } from './utils/currency.js';
 
 const routes = {
   dashboard: DashboardPage,
@@ -113,6 +116,31 @@ function renderAuthenticatedApp(root, profile) {
   if (currentDate) currentDate.textContent = formatToday();
   updateSupabaseBadge(supabaseBadge);
 
+  // Load and bind Sidebar Wallet Balance
+  const updateSidebarWallet = async () => {
+    const el = document.querySelector('[data-sidebar-wallet-balance]');
+    if (!el || !profile?.id) return;
+    try {
+      const info = await WalletService.getWalletInfo(profile.id);
+      el.textContent = formatCurrency(info?.totalAvailable || 0);
+    } catch (err) {
+      console.warn('[app] Failed to update sidebar wallet:', err);
+    }
+  };
+
+  updateSidebarWallet();
+
+  document.querySelector('[data-sidebar-topup]')?.addEventListener('click', () => {
+    if (!profile?.id) return;
+    WalletTopupModal.open({
+      customerId: profile.id,
+      customerName: profile.display_name || profile.username || 'Khách hàng',
+      onTopupSuccess: async () => {
+        await updateSidebarWallet();
+      },
+    });
+  });
+
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
     await AuthService.signOut();
     window.location.hash = '#/login';
@@ -154,31 +182,8 @@ function renderLogin(root, message = '') {
 }
 
 function renderPublicRegistration(root) {
-  root.innerHTML = `
-    <main class="public-shell">
-      <div class="public-topbar">
-        <div><strong>🏪 Đăng ký Kiosk</strong><span>Diễn Châu · À Đây Rồi</span></div>
-        <a href="#/login" data-open-login>Đăng nhập quản trị</a>
-      </div>
-      <div class="public-content" data-route-outlet></div>
-    </main>
-    <div class="modal-overlay hidden" data-modal-overlay>
-      <div class="modal" data-modal role="dialog" aria-modal="true" aria-labelledby="app-modal-title">
-        <div class="modal-header"><h3 id="app-modal-title" data-modal-title></h3><button class="modal-close" type="button" data-modal-close>✕</button></div>
-        <div class="modal-body" data-modal-body></div>
-      </div>
-    </div>
-    <div class="toast-container" data-toast-container aria-live="polite"></div>
-  `;
-  Modal.mount();
-  Toast.mount();
-  root.querySelector('[data-open-login]')?.addEventListener('click', (event) => {
-    event.preventDefault();
-    window.location.hash = '#/login';
-    window.location.reload();
-  });
-  const outlet = root.querySelector('[data-route-outlet]');
-  outlet.innerHTML = RegisterPage();
+  if (getRouteName() !== 'register') window.location.hash = '#/register';
+  root.innerHTML = RegisterPage();
   RegisterPage.afterRender();
 }
 

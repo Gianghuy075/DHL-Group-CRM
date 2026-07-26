@@ -23,12 +23,25 @@ export function AppLayout({ navSections, user }) {
           ${navSections.map(renderNavSection).join('')}
         </nav>
         <div class="sidebar-footer">
-          <div class="user-avatar">${escapeHtml(initial)}</div>
-          <div class="sidebar-user-meta">
-            <div class="user-name">${escapeHtml(displayName)}</div>
-            <div class="user-role">${escapeHtml(roleLabel)}</div>
+          <div class="sidebar-wallet-card" data-sidebar-wallet-card>
+            <div class="wallet-info-meta">
+              <span class="wallet-icon-sm font-emoji">💳</span>
+              <div class="wallet-text-group">
+                <span class="wallet-label-sm">Ví Ảo KioskHub</span>
+                <strong class="wallet-balance-val text-gold" data-sidebar-wallet-balance>…</strong>
+              </div>
+            </div>
+            <button class="btn-topup-sidebar" type="button" data-sidebar-topup title="Nạp tiền vào Ví Ảo">+ Nạp</button>
           </div>
-          <button class="logout-button" type="button" data-logout aria-label="Đăng xuất">↪</button>
+
+          <div class="sidebar-user-row">
+            <div class="user-avatar">${escapeHtml(initial)}</div>
+            <div class="sidebar-user-meta">
+              <div class="user-name">${escapeHtml(displayName)}</div>
+              <div class="user-role">${escapeHtml(roleLabel)}</div>
+            </div>
+            <button class="logout-button" type="button" data-logout aria-label="Đăng xuất">↪</button>
+          </div>
         </div>
       </aside>
 

@@ -223,16 +223,13 @@ function renderOverviewReport(report) {
   return `
     ${renderSummaryCards([
       StatCard({ tone: 'blue', icon: '✅', value: report.summary.completedCount, label: 'Thanh toán hoàn thành' }),
-      StatCard({ tone: 'purple', icon: '⏳', value: report.summary.pendingCount, label: 'Thanh toán chờ duyệt' }),
+      StatCard({ tone: 'green', icon: '💰', value: formatCurrency(report.summary.totalRevenue), label: 'Tổng doanh thu' }),
       StatCard({ tone: 'orange', icon: '🏪', value: report.summary.warningKiosks, label: 'Kiosk sắp hết hạn' }),
       StatCard({ tone: 'red', icon: '❌', value: report.summary.expiredKiosks, label: 'Kiosk hết hạn' }),
     ])}
     <div class="report-grid">
       ${renderReportCard('Top 10 khách hàng doanh thu cao', renderTable(topCustomerColumns(), report.topCustomers, 'Không có khách hàng phát sinh doanh thu trong kỳ.'))}
       ${renderReportCard('Kiosk cần xử lý', renderTable(kioskActionColumns(), actionRows, 'Không có kiosk cần xử lý.'))}
-    </div>
-    <div class="stats-grid report-stats report-total-block">
-      ${StatCard({ tone: 'green', icon: '💰', value: formatCurrency(report.summary.totalRevenue), label: 'Doanh thu trong kỳ', className: 'stat-card-fluid' })}
     </div>
   `;
 }
@@ -242,7 +239,6 @@ function renderRevenueReport(report) {
     ${renderSummaryCards([
       StatCard({ tone: 'green', icon: '💰', value: formatCurrency(report.summary.totalRevenue), label: 'Tổng doanh thu', className: 'stat-card-fluid' }),
       StatCard({ tone: 'blue', icon: '🧾', value: report.summary.completedCount, label: 'Thanh toán hoàn thành' }),
-      StatCard({ tone: 'teal', icon: '🏦', value: formatCurrency(report.summary.pendingAmount), label: 'Đang chờ thu', className: 'stat-card-fluid' }),
       StatCard({ tone: 'purple', icon: '📊', value: averagePayment(report), label: 'Trung bình/thanh toán' }),
     ])}
     <div class="report-grid">
@@ -255,7 +251,7 @@ function renderRevenueReport(report) {
 
 function renderKioskReport(report) {
   const followUpRows = report.kioskRows
-    .filter((kiosk) => ['warning', 'expired', 'pending'].includes(kiosk.derivedStatus))
+    .filter((kiosk) => ['warning', 'expired'].includes(kiosk.derivedStatus))
     .sort((a, b) => (a.daysLeft ?? 9999) - (b.daysLeft ?? 9999));
 
   return `
@@ -264,7 +260,6 @@ function renderKioskReport(report) {
       StatCard({ tone: 'green', icon: '✅', value: report.summary.activeKiosks, label: 'Đang hoạt động' }),
       StatCard({ tone: 'orange', icon: '⏰', value: report.summary.warningKiosks, label: 'Sắp hết hạn' }),
       StatCard({ tone: 'red', icon: '❌', value: report.summary.expiredKiosks, label: 'Hết hạn' }),
-      StatCard({ tone: 'purple', icon: '⏳', value: report.summary.pendingKiosks, label: 'Chờ duyệt' }),
     ])}
     <div class="report-grid">
       ${renderReportCard('Trạng thái Kiosk', renderTable(kioskStatusColumns(), report.kioskStatusRows, 'Không có kiosk.'))}
@@ -276,8 +271,7 @@ function renderKioskReport(report) {
 function renderReconciliationReport(report) {
   return `
     ${renderSummaryCards([
-      StatCard({ tone: 'purple', icon: '⏳', value: report.summary.pendingCount, label: 'Thanh toán chờ xác nhận' }),
-      StatCard({ tone: 'teal', icon: '💳', value: formatCurrency(report.summary.pendingAmount), label: 'Tổng tiền chờ xác nhận', className: 'stat-card-fluid' }),
+      StatCard({ tone: 'green', icon: '✅', value: report.summary.completedCount, label: 'Thanh toán hoàn thành' }),
       StatCard({ tone: 'orange', icon: '⚠️', value: report.summary.issueCount, label: 'Cảnh báo dữ liệu' }),
       StatCard({ tone: 'red', icon: '↩️', value: report.summary.rejectedCount, label: 'Thanh toán bị từ chối' }),
     ])}

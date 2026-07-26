@@ -1,8 +1,10 @@
 import { EmptyState } from '../components/EmptyState.js';
 import { PageHeader } from '../components/PageHeader.js';
 import { openRenewKioskForm } from '../components/RenewKioskForm.js';
+import { openBusinessTypeForm } from '../components/BusinessTypeForm.js';
 import { KioskPurchaseModal } from '../components/KioskPurchaseModal.js';
 import { Toolbar } from '../components/Toolbar.js';
+import { Toast } from '../components/Toast.js';
 import { AuthService } from '../services/AuthService.js';
 import { BusinessTypeService } from '../services/BusinessTypeService.js';
 import { KioskService } from '../services/KioskService.js';
@@ -20,7 +22,7 @@ const KIOSK_STATUSES = [
 ];
 
 const state = {
-  activeTab: 'store', // 'store' or 'mykiosks'
+  activeTab: 'auto', // 'store', 'mykiosks', 'admin_kiosks', 'admin_packages'
   searchTerm: '',
   status: '',
   businessTypeId: '',
@@ -34,14 +36,72 @@ const state = {
 
 export function KiosksPage() {
   return `
-    ${PageHeader({
-      title: 'Dịch vụ Kiosk Facebook',
-      actions: `
-        <button class="btn-primary" id="buy-kiosk-button" type="button">🛒 Mua gói Kiosk Mới</button>
-      `,
-    })}
+    <div id="kiosk-page-header-outlet">
+      ${PageHeader({ title: 'Đang tải...' })}
+    </div>
 
     <div class="kiosks-page-container">
+      <div id="kiosk-tabs-outlet"></div>
+      <div id="kiosk-tab-content">
+        <div class="empty-state"><div class="spinner-small"></div> Đang tải hệ thống...</div>
+      </div>
+    </div>
+  `;
+}
+
+KiosksPage.afterRender = async function afterRenderKiosks() {
+  const session = await AuthService.getCurrentSession();
+  const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+  state.currentProfile = profile;
+
+  const isAdmin = profile?.role === 'admin';
+  if (state.activeTab === 'auto') {
+    state.activeTab = isAdmin ? 'admin_kiosks' : 'store';
+  }
+
+  renderHeader(isAdmin);
+  renderTabs(isAdmin);
+
+  bindGlobalEvents(isAdmin);
+  await loadKioskStoreCatalog();
+  renderTabContent(isAdmin);
+};
+
+function renderHeader(isAdmin) {
+  const container = document.getElementById('kiosk-page-header-outlet');
+  if (!container) return;
+
+  if (isAdmin) {
+    container.innerHTML = PageHeader({
+      title: 'Quản lý Kiosk Hệ Thống',
+      actions: `<button class="btn-primary" id="admin-add-package-btn" type="button">➕ Thêm Gói Kiosk Mới</button>`,
+    });
+  } else {
+    container.innerHTML = PageHeader({
+      title: 'Dịch vụ Kiosk Facebook',
+      actions: `<button class="btn-primary" id="buy-kiosk-button" type="button">🛒 Mua gói Kiosk Mới</button>`,
+    });
+  }
+}
+
+function renderTabs(isAdmin) {
+  const container = document.getElementById('kiosk-tabs-outlet');
+  if (!container) return;
+
+  if (isAdmin) {
+    container.innerHTML = `
+      <div class="task-tabs-bar" style="margin-bottom: 20px;">
+        <button class="task-tab ${state.activeTab === 'admin_kiosks' ? 'active' : ''}" type="button" data-kiosk-tab="admin_kiosks">
+          📊 Theo dõi Kiosk Khách hàng (${state.total || 'All'})
+        </button>
+
+        <button class="task-tab ${state.activeTab === 'admin_packages' ? 'active' : ''}" type="button" data-kiosk-tab="admin_packages">
+          ⚙️ Quản lý Gói Kiosk Mở Bán (${state.businessTypes.length})
+        </button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
       <div class="task-tabs-bar" style="margin-bottom: 20px;">
         <button class="task-tab ${state.activeTab === 'store' ? 'active' : ''}" type="button" data-kiosk-tab="store">
           🛒 Danh mục Gói Kiosk Đang Mở Bán
@@ -50,35 +110,33 @@ export function KiosksPage() {
           📱 Kiosk Của Tôi
         </button>
       </div>
+    `;
+  }
 
-      <div id="kiosk-tab-content">
-        <div class="empty-state"><div class="spinner-small"></div> Đang tải...</div>
-      </div>
-    </div>
-  `;
-}
-
-KiosksPage.afterRender = async function afterRenderKiosks() {
-  bindTabEvents();
-  bindGlobalEvents();
-  await loadKioskStoreCatalog();
-  renderTabContent();
-};
-
-function bindTabEvents() {
-  document.querySelectorAll('[data-kiosk-tab]').forEach((btn) => {
+  container.querySelectorAll('[data-kiosk-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.activeTab = btn.dataset.kioskTab;
-      document.querySelectorAll('[data-kiosk-tab]').forEach((b) => b.classList.remove('active'));
+      container.querySelectorAll('[data-kiosk-tab]').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      renderTabContent();
+      renderTabContent(isAdmin);
     });
   });
 }
 
-function bindGlobalEvents() {
+function bindGlobalEvents(isAdmin) {
   document.getElementById('buy-kiosk-button')?.addEventListener('click', async () => {
     await openPurchaseModal();
+  });
+
+  document.getElementById('admin-add-package-btn')?.addEventListener('click', () => {
+    openBusinessTypeForm({
+      onSaved: async () => {
+        Toast.show('Đã lưu Gói Kiosk mở bán thành công!');
+        await loadKioskStoreCatalog();
+        renderTabs(isAdmin);
+        renderTabContent(isAdmin);
+      },
+    });
   });
 }
 
@@ -98,37 +156,173 @@ async function openPurchaseModal(preSelectedCategoryId = '', preSelectedBusiness
     preSelectedBusinessTypeId,
     onPurchased: async () => {
       state.activeTab = 'mykiosks';
-      const myTab = document.querySelector('[data-kiosk-tab="mykiosks"]');
-      if (myTab) {
-        document.querySelectorAll('[data-kiosk-tab]').forEach((b) => b.classList.remove('active'));
-        myTab.classList.add('active');
-      }
-      renderTabContent();
+      renderTabs(false);
+      renderTabContent(false);
     },
   });
 }
 
-function renderTabContent() {
+function renderTabContent(isAdmin) {
   const content = document.getElementById('kiosk-tab-content');
   if (!content) return;
 
-  if (state.activeTab === 'store') {
-    renderStoreTab(content);
+  if (isAdmin) {
+    if (state.activeTab === 'admin_packages') {
+      renderAdminPackagesTab(content);
+    } else {
+      renderAdminKiosksTab(content);
+    }
   } else {
-    renderMyKiosksTab(content);
+    if (state.activeTab === 'mykiosks') {
+      renderUserKiosksTab(content);
+    } else {
+      renderUserStoreTab(content);
+    }
   }
 }
 
 /**
- * TAB 1: Store Catalog (Danh mục Gói Kiosk Đang Mở Bán)
+ * ADMIN TAB 2: Manage Packages (Cấu hình Gói Kiosk Mở Bán)
  */
-async function renderStoreTab(container) {
+async function renderAdminPackagesTab(container) {
+  if (!state.businessTypes.length) {
+    container.innerHTML = `<div class="empty-state"><div class="spinner-small"></div> Đang tải gói Kiosk...</div>`;
+    await loadKioskStoreCatalog();
+  }
+
+  if (!state.businessTypes.length) {
+    container.innerHTML = EmptyState({
+      title: 'Chưa có Gói Kiosk nào',
+      message: 'Nhấn nút "➕ Thêm Gói Kiosk Mới" ở góc trên để tạo gói mở bán đầu tiên!',
+    });
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="kiosk-store-grid">
+      ${state.businessTypes.map(renderAdminPackageCard).join('')}
+    </div>
+  `;
+
+  // Bind Admin Edit / Delete Actions
+  container.querySelectorAll('[data-edit-package]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.editPackage;
+      openBusinessTypeForm({
+        businessTypeId: id,
+        onSaved: async () => {
+          Toast.show('Đã cập nhật gói Kiosk!');
+          await loadKioskStoreCatalog();
+          renderTabContent(true);
+        },
+      });
+    });
+  });
+
+  container.querySelectorAll('[data-delete-package]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.deletePackage;
+      if (!confirm('Bạn có chắc chắn muốn ẩn/xóa Gói Kiosk này khỏi danh mục mở bán?')) return;
+
+      try {
+        await BusinessTypeService.remove(id);
+        Toast.show('Đã ẩn gói Kiosk khỏi danh mục!');
+        await loadKioskStoreCatalog();
+        renderTabContent(true);
+      } catch (err) {
+        Toast.show(err?.message || 'Không thể xóa gói Kiosk.');
+      }
+    });
+  });
+}
+
+function renderAdminPackageCard(bt) {
+  const categoryName = bt.categories?.name || 'Gói Dịch Vụ';
+  const price = formatCurrency(bt.price_per_month || 0);
+
+  return `
+    <article class="kiosk-package-card">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="package-category-badge">${escapeHtml(categoryName)}</span>
+          <span class="badge ${bt.is_active !== false ? 'badge-active' : 'badge-inactive'}">
+            ${bt.is_active !== false ? 'Đang mở bán' : 'Tạm ẩn'}
+          </span>
+        </div>
+        <h3 class="package-title">🏬 ${escapeHtml(bt.name || 'Gói Kiosk')}</h3>
+        <div class="package-desc">${escapeHtml(bt.description || 'Gói kiosk tự động hỗ trợ đăng bài và chăm sóc CRM 24/7.')}</div>
+      </div>
+
+      <div>
+        <div class="package-price-box">
+          <div class="package-price">${price} <span class="package-period">/ tháng</span></div>
+        </div>
+        <div class="inline-actions" style="gap: 8px;">
+          <button class="btn-secondary compact full-width" type="button" data-edit-package="${escapeHtml(bt.id)}">✏️ Chỉnh sửa Gói</button>
+          <button class="table-action-button text-danger compact" type="button" data-delete-package="${escapeHtml(bt.id)}">🗑️ Ẩn Gói</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+/**
+ * ADMIN TAB 1: Admin Customer Kiosks List (Theo dõi Kiosk Toàn Hệ Thống)
+ */
+async function renderAdminKiosksTab(container) {
+  container.innerHTML = `
+    ${Toolbar({
+      children: `
+        <input
+          type="search"
+          id="kiosk-search"
+          class="form-control"
+          placeholder="Tìm theo Khách hàng, Facebook ID, tên Facebook, loại hình KD"
+          aria-label="Tìm Kiosk"
+          autocomplete="off"
+        />
+        <select id="kiosk-business-type-filter" class="filter-select" aria-label="Lọc loại hình kinh doanh">
+          <option value="">Tất cả loại hình KD</option>
+          ${state.businessTypes.map((bt) => `<option value="${escapeHtml(bt.id)}">${escapeHtml(bt.name)}</option>`).join('')}
+        </select>
+        <select id="kiosk-status-filter" class="filter-select" aria-label="Lọc trạng thái">
+          <option value="">Tất cả trạng thái</option>
+          ${KIOSK_STATUSES.map((status) => `<option value="${status.value}">${status.label}</option>`).join('')}
+        </select>
+      `,
+    })}
+    <div class="kiosk-grid" id="kiosk-grid">
+      ${EmptyState({ title: 'Đang tải Kiosk', message: 'Đang đọc dữ liệu toàn hệ thống...' })}
+    </div>
+    <div class="pagination-bar">
+      <div id="kiosks-page-summary" class="pagination-summary">—</div>
+      <div class="pagination-controls">
+        <select id="kiosks-page-size" class="filter-select compact" aria-label="Số kiosk mỗi trang">
+          ${PAGE_SIZE_OPTIONS.map((size) => `<option value="${size}" ${size === state.pageSize ? 'selected' : ''}>${size} / trang</option>`).join('')}
+        </select>
+        <button id="kiosks-prev-page" class="btn-secondary" type="button">Trước</button>
+        <button id="kiosks-next-page" class="btn-secondary" type="button">Sau</button>
+      </div>
+    </div>
+  `;
+
+  syncKioskControls();
+  bindKiosksListEvents(true);
+  await loadKiosks(true);
+}
+
+/**
+ * USER TAB 1: Store Catalog (Danh mục Gói Kiosk Đang Mở Bán cho User)
+ */
+async function renderUserStoreTab(container) {
   if (!state.businessTypes.length) {
     container.innerHTML = `<div class="empty-state"><div class="spinner-small"></div> Đang đọc danh mục gói Kiosk...</div>`;
     await loadKioskStoreCatalog();
   }
 
-  if (!state.businessTypes.length) {
+  const activePackages = state.businessTypes.filter((bt) => bt.is_active !== false);
+
+  if (!activePackages.length) {
     container.innerHTML = EmptyState({
       title: 'Chưa có gói Kiosk nào mở bán',
       message: 'Vui lòng quay lại sau hoặc liên hệ quản trị viên.',
@@ -138,7 +332,7 @@ async function renderStoreTab(container) {
 
   container.innerHTML = `
     <div class="kiosk-store-grid">
-      ${state.businessTypes.map(renderPackageCard).join('')}
+      ${activePackages.map(renderUserPackageCard).join('')}
     </div>
   `;
 
@@ -152,7 +346,7 @@ async function renderStoreTab(container) {
   });
 }
 
-function renderPackageCard(bt) {
+function renderUserPackageCard(bt) {
   const categoryName = bt.categories?.name || 'Gói Dịch Vụ';
   const price = formatCurrency(bt.price_per_month || 0);
 
@@ -176,20 +370,10 @@ function renderPackageCard(bt) {
   `;
 }
 
-async function loadKioskStoreCatalog() {
-  try {
-    const { data } = await BusinessTypeService.list({ status: 'active' });
-    state.businessTypes = data || [];
-  } catch (error) {
-    console.warn('[KiosksPage] Failed to load business types catalog:', error);
-    state.businessTypes = [];
-  }
-}
-
 /**
- * TAB 2: My Kiosks (Kiosk Của Tôi)
+ * USER TAB 2: User Kiosks List (Kiosk Của Tôi)
  */
-async function renderMyKiosksTab(container) {
+async function renderUserKiosksTab(container) {
   container.innerHTML = `
     ${Toolbar({
       children: `
@@ -201,10 +385,6 @@ async function renderMyKiosksTab(container) {
           aria-label="Tìm Kiosk"
           autocomplete="off"
         />
-        <select id="kiosk-business-type-filter" class="filter-select" aria-label="Lọc loại hình kinh doanh">
-          <option value="">Tất cả loại hình KD</option>
-          ${state.businessTypes.map((bt) => `<option value="${escapeHtml(bt.id)}">${escapeHtml(bt.name)}</option>`).join('')}
-        </select>
         <select id="kiosk-status-filter" class="filter-select" aria-label="Lọc trạng thái">
           <option value="">Tất cả trạng thái</option>
           ${KIOSK_STATUSES.map((status) => `<option value="${status.value}">${status.label}</option>`).join('')}
@@ -227,8 +407,18 @@ async function renderMyKiosksTab(container) {
   `;
 
   syncKioskControls();
-  bindMyKiosksEvents();
-  await loadKiosks();
+  bindKiosksListEvents(false);
+  await loadKiosks(false);
+}
+
+async function loadKioskStoreCatalog() {
+  try {
+    const { data } = await BusinessTypeService.list();
+    state.businessTypes = data || [];
+  } catch (error) {
+    console.warn('[KiosksPage] Failed to load business types catalog:', error);
+    state.businessTypes = [];
+  }
 }
 
 function syncKioskControls() {
@@ -243,7 +433,7 @@ function syncKioskControls() {
   if (pageSizeSelect) pageSizeSelect.value = String(state.pageSize);
 }
 
-function bindMyKiosksEvents() {
+function bindKiosksListEvents(isAdmin) {
   const searchInput = document.getElementById('kiosk-search');
   const statusFilter = document.getElementById('kiosk-status-filter');
   const businessTypeFilter = document.getElementById('kiosk-business-type-filter');
@@ -253,37 +443,37 @@ function bindMyKiosksEvents() {
   searchInput?.addEventListener('input', debounce((event) => {
     state.searchTerm = event.target.value.trim();
     state.page = 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   }, 300));
 
   statusFilter?.addEventListener('change', (event) => {
     state.status = event.target.value;
     state.page = 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   });
 
   businessTypeFilter?.addEventListener('change', (event) => {
     state.businessTypeId = event.target.value;
     state.page = 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   });
 
   pageSizeSelect?.addEventListener('change', (event) => {
     state.pageSize = Number(event.target.value);
     state.page = 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   });
 
   document.getElementById('kiosks-prev-page')?.addEventListener('click', () => {
     if (state.page <= 1) return;
     state.page -= 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   });
 
   document.getElementById('kiosks-next-page')?.addEventListener('click', () => {
     if (state.page >= totalPages()) return;
     state.page += 1;
-    loadKiosks();
+    loadKiosks(isAdmin);
   });
 
   grid?.addEventListener('click', (event) => {
@@ -292,21 +482,19 @@ function bindMyKiosksEvents() {
 
     openRenewKioskForm({
       kioskId: button.dataset.kioskRenew,
-      onSaved: loadKiosks,
+      onSaved: () => loadKiosks(isAdmin),
     });
   });
 }
 
-async function loadKiosks() {
+async function loadKiosks(isAdmin = false) {
   const requestId = state.requestId + 1;
   state.requestId = requestId;
   setLoadingState();
 
   try {
     const session = await AuthService.getCurrentSession();
-    const profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
-    state.currentProfile = profile;
-    const customerId = profile?.role === 'user' ? session?.user?.id : undefined;
+    const customerId = isAdmin ? undefined : session?.user?.id;
 
     const { data, count } = await KioskService.list({
       searchTerm: state.searchTerm,
@@ -319,7 +507,7 @@ async function loadKiosks() {
     if (requestId !== state.requestId) return;
 
     state.total = count || 0;
-    renderKiosks(data || []);
+    renderKiosks(data || [], isAdmin);
     renderPagination();
   } catch (error) {
     if (requestId !== state.requestId) return;
@@ -327,37 +515,39 @@ async function loadKiosks() {
   }
 }
 
-function renderKiosks(kiosks) {
+function renderKiosks(kiosks, isAdmin) {
   const grid = document.getElementById('kiosk-grid');
   if (!grid) return;
 
   if (!kiosks.length) {
     grid.innerHTML = EmptyState({
       title: 'Chưa có Kiosk nào',
-      message: 'Bạn chưa mua gói Kiosk nào. Hãy sang tab "Danh mục Gói Kiosk" để chọn gói!',
+      message: isAdmin ? 'Hệ thống chưa có bản ghi Kiosk nào.' : 'Bạn chưa sở hữu Kiosk nào. Hãy chọn mua từ danh mục mở bán!',
     });
     return;
   }
 
-  grid.innerHTML = kiosks.map(renderKioskCard).join('');
+  grid.innerHTML = kiosks.map((k) => renderKioskCard(k, isAdmin)).join('');
 }
 
-function renderKioskCard(kiosk) {
+function renderKioskCard(kiosk, isAdmin) {
   const businessType = kiosk.business_types?.name || '—';
   const category = kiosk.categories?.name || '—';
+  const customerName = kiosk.customers?.facebook_name || 'Khách hàng';
 
   return `
     <article class="kiosk-card">
       <div class="kiosk-card-header">
         <div>
           <div class="kiosk-name">${escapeHtml(kiosk.facebook_name || '—')}</div>
-          <div class="kiosk-category">${escapeHtml(category)}</div>
+          <div class="kiosk-category">${escapeHtml(category)} ${isAdmin ? `· <small class="text-gold">${escapeHtml(customerName)}</small>` : ''}</div>
         </div>
         ${renderStatusBadge(kiosk.status)}
       </div>
       <div class="kiosk-details">
         ${kioskDetail('Facebook ID', kiosk.facebook_id)}
         ${kioskDetail('Loại hình KD', businessType)}
+        ${isAdmin ? kioskDetail('Khách hàng', customerName) : ''}
         ${kioskDetail('Ngày bắt đầu', formatDate(kiosk.start_date))}
         ${kioskDetail('Ngày hết hạn', formatDate(kiosk.end_date))}
         ${kioskDetail('Tổng đã thanh toán', formatCurrency(kiosk.total_paid || 0))}

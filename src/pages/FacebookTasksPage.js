@@ -134,55 +134,24 @@ function renderWalletBanner() {
   const container = document.getElementById('tasks-wallet-banner-outlet');
   if (!container) return;
 
-  const { totalAvailable, bonusBalance } = state.walletInfo;
   const isVerified = Boolean(state.currentCustomer?.facebook_verified);
-  const totalReach = Number(state.currentCustomer?.friend_count || 0) + Number(state.currentCustomer?.follower_count || 0);
+
+  if (isVerified) {
+    container.innerHTML = '';
+    return;
+  }
 
   container.innerHTML = `
     <div class="tasks-banner-wrapper">
-      <div class="tasks-wallet-mini-card">
+      <div class="fb-verified-mini-banner warning">
         <div class="mini-card-info">
-          <span class="mini-card-icon font-emoji">💳</span>
-          <div>
-            <div class="mini-card-title">Ví Ảo: <strong class="text-gold">${formatCurrency(totalAvailable)}</strong> ${bonusBalance > 0 ? `<small class="text-bonus">(+${formatCurrency(bonusBalance)} thưởng)</small>` : ''}</div>
-          </div>
+          <span class="banner-icon font-emoji">⚠️</span>
+          <div class="mini-card-title">Bạn chưa xác thực tài khoản Facebook cá nhân</div>
         </div>
-        <button class="btn-primary compact" type="button" id="tasks-topup-btn">Nạp Ví</button>
+        <button class="btn-secondary compact" type="button" id="tasks-verify-fb-btn">Xác thực ngay ➔</button>
       </div>
-
-      ${isVerified ? `
-        <div class="fb-verified-mini-banner success">
-          <div class="mini-card-info">
-            <span class="banner-icon font-emoji">✅</span>
-            <div class="mini-card-title">FB: <strong>${escapeHtml(state.currentCustomer?.facebook_name || 'Đã xác thực')}</strong> (${totalReach} Bạn bè)</div>
-          </div>
-        </div>
-      ` : `
-        <div class="fb-verified-mini-banner warning">
-          <div class="mini-card-info">
-            <span class="banner-icon font-emoji">⚠️</span>
-            <div class="mini-card-title">Chưa xác thực Facebook</div>
-          </div>
-          <button class="btn-secondary compact" type="button" id="tasks-verify-fb-btn">Xác thực ➔</button>
-        </div>
-      `}
     </div>
   `;
-
-  document.getElementById('tasks-topup-btn')?.addEventListener('click', () => {
-    if (!state.currentCustomer?.id) {
-      Toast.show('Vui lòng chọn khách hàng để nạp ví.');
-      return;
-    }
-    WalletTopupModal.open({
-      customerId: state.currentCustomer.id,
-      customerName: state.currentCustomer.facebook_name || 'Khách hàng',
-      onTopupSuccess: async () => {
-        await loadUserData();
-        renderTabContent();
-      },
-    });
-  });
 
   document.getElementById('tasks-verify-fb-btn')?.addEventListener('click', () => {
     openFBVerificationPrompt();

@@ -23,14 +23,11 @@ const PAYMENT_COLUMNS = [
   { label: 'Giá/tháng', key: 'price_per_month' },
   { label: 'Tổng tiền', key: 'total_amount' },
   { label: 'Trạng thái thanh toán', key: 'payment_status' },
-  { label: 'Người xác nhận', key: null },
   { label: 'Ngày tạo', key: 'created_at' },
-  { label: 'Phê duyệt', key: null },
 ];
 
 const PAYMENT_STATUSES = [
-  { value: 'pending', label: 'Chờ xác nhận' },
-  { value: 'completed', label: 'Hoàn thành' },
+  { value: 'completed', label: 'Hoàn thành (Đã thanh toán)' },
   { value: 'rejected', label: 'Bị từ chối' },
   { value: 'cancelled', label: 'Đã hủy' },
 ];
@@ -76,7 +73,6 @@ export function PaymentsPage() {
     <div class="payments-summary">
       ${StatCard({ tone: 'green', icon: '💰', value: '<span id="payments-total-revenue">—</span>', label: 'Tổng thu' })}
       ${StatCard({ tone: 'blue', icon: '📅', value: '<span id="payments-month-revenue">—</span>', label: 'Tháng này' })}
-      ${StatCard({ tone: 'purple', icon: '⏳', value: '<span id="payments-pending-count">—</span>', label: 'Chờ xác nhận' })}
     </div>
     <div class="table-card payments-table-card">
       <table class="data-table payments-table">
@@ -284,9 +280,7 @@ function renderPayments(payments) {
       <td>${formatCurrency(payment.price_per_month || 0)}</td>
       <td class="strong-cell">${formatCurrency(payment.total_amount || 0)}</td>
       <td>${renderPaymentStatusBadge(payment.payment_status)}</td>
-      <td>${escapeHtml(confirmedBy(payment))}</td>
       <td>${formatDateTime(payment.created_at)}</td>
-      <td>${renderApprovalAction(payment)}</td>
     </tr>
   `).join('');
 }
@@ -294,7 +288,6 @@ function renderPayments(payments) {
 function renderSummary(summary = {}) {
   setText('payments-total-revenue', formatCurrency(summary.totalRevenue || 0));
   setText('payments-month-revenue', formatCurrency(summary.monthRevenue || 0));
-  setText('payments-pending-count', String(summary.pendingCount || 0));
 }
 
 function renderApprovalAction(payment) {

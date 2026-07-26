@@ -1,49 +1,50 @@
 import { AuthService } from '../services/AuthService.js';
 import { escapeHtml } from '../utils/html.js';
 
-// Đăng ký tài khoản đơn giản: username, tên hiển thị, mật khẩu, xác nhận mật khẩu.
-// (Các phần đăng ký Kiosk / PayOS / xác thực Facebook đã được comment lại ở cuối file
-//  để dùng lại sau này.)
-
 export function RegisterPage() {
   return `
-    <section class="form-card registration-card">
-      <div class="auth-logo">🏪</div>
-      <h1>Đăng ký tài khoản</h1>
-      <p>Tạo tài khoản để nạp tiền và mua gói Kiosk.</p>
+    <main class="auth-shell">
+      <section class="auth-card" style="width: min(100%, 460px);">
+        <div class="auth-logo">🏪</div>
+        <h1>Đăng ký tài khoản</h1>
+        <p>Hệ thống quản lý Kiosk · Diễn Châu - À Đây Rồi</p>
 
-      <div id="registration-form-error" class="form-error hidden"></div>
+        <div id="registration-form-error" class="form-error hidden"></div>
 
-      <form id="public-registration-form" novalidate>
-        <label class="form-group">
-          <span>Tên đăng nhập *</span>
-          <input class="form-control" id="register-username" type="text"
-                 autocomplete="username" autocapitalize="none" spellcheck="false"
-                 placeholder="vd: kiosk_dienchau" required />
-        </label>
-        <label class="form-group">
-          <span>Tên hiển thị *</span>
-          <input class="form-control" id="register-display-name" type="text"
-                 autocomplete="name" required />
-        </label>
-        <label class="form-group">
-          <span>Mật khẩu *</span>
-          <input class="form-control" id="register-password" type="password"
-                 autocomplete="new-password" required />
-        </label>
-        <label class="form-group">
-          <span>Xác nhận mật khẩu *</span>
-          <input class="form-control" id="register-password-confirm" type="password"
-                 autocomplete="new-password" required />
-        </label>
+        <form id="public-registration-form" novalidate>
+          <label class="form-group">
+            <span>Tên đăng nhập *</span>
+            <input class="form-control" id="register-username" type="text"
+                   autocomplete="username" autocapitalize="none" spellcheck="false"
+                   placeholder="Tên tài khoản (vd: kiosk_dienchau)" required />
+          </label>
 
-        <div class="registration-actions">
-          <button class="btn-primary auth-submit" id="register-submit-button" type="submit">Đăng ký</button>
-        </div>
-      </form>
+          <label class="form-group">
+            <span>Tên hiển thị / Tên Kiosk *</span>
+            <input class="form-control" id="register-display-name" type="text"
+                   placeholder="Họ tên hoặc tên thương hiệu Kiosk" autocomplete="name" required />
+          </label>
 
-      <a class="public-register-link" href="#/login" data-open-login>Đã có tài khoản? Đăng nhập</a>
-    </section>
+          <div class="form-row">
+            <label class="form-group">
+              <span>Mật khẩu *</span>
+              <input class="form-control" id="register-password" type="password"
+                     autocomplete="new-password" placeholder="Tối thiểu 6 ký tự" required />
+            </label>
+
+            <label class="form-group">
+              <span>Xác nhận mật khẩu *</span>
+              <input class="form-control" id="register-password-confirm" type="password"
+                     autocomplete="new-password" placeholder="Nhập lại mật khẩu" required />
+            </label>
+          </div>
+
+          <button class="btn-primary auth-submit" id="register-submit-button" type="submit">Đăng ký tài khoản</button>
+        </form>
+
+        <a class="public-register-link" href="#/login" data-open-login>Đã có tài khoản? Đăng nhập</a>
+      </section>
+    </main>
   `;
 }
 
@@ -69,15 +70,15 @@ async function submitRegistration() {
   const confirm = document.getElementById('register-password-confirm')?.value || '';
 
   if (!/^[a-zA-Z0-9._-]{3,30}$/.test(username)) {
-    showFormError('Tên đăng nhập 3-30 ký tự, chỉ gồm chữ, số và . _ -');
+    showFormError('Tên đăng nhập từ 3 - 30 ký tự (chữ, số và . _ -)');
     return;
   }
   if (!displayName) {
-    showFormError('Tên hiển thị là bắt buộc.');
+    showFormError('Vui lòng nhập tên hiển thị.');
     return;
   }
   if (password.length < 6) {
-    showFormError('Mật khẩu tối thiểu 6 ký tự.');
+    showFormError('Mật khẩu phải chứa ít nhất 6 ký tự.');
     return;
   }
   if (password !== confirm) {
@@ -90,11 +91,10 @@ async function submitRegistration() {
 
   try {
     await AuthService.register({ username, displayName, password });
-    // Đăng ký thành công → đã có token, vào thẳng ứng dụng.
     window.location.hash = '#/dashboard';
     window.location.reload();
   } catch (error) {
-    showFormError(error?.message || 'Không thể đăng ký tài khoản.');
+    showFormError(error?.message || 'Không thể tạo tài khoản.');
     setSubmitting(button, false);
   }
 }
@@ -120,26 +120,5 @@ function clearFormError() {
 function setSubmitting(button, isSubmitting) {
   if (!button) return;
   button.disabled = isSubmitting;
-  button.textContent = isSubmitting ? 'Đang đăng ký...' : 'Đăng ký';
+  button.textContent = isSubmitting ? 'Đang đăng ký...' : 'Đăng ký tài khoản';
 }
-
-/* ============================================================================
- * ĐĂNG KÝ KIOSK ĐẦY ĐỦ (PayOS + xác thực Facebook) — TẠM COMMENT LẠI
- * Giữ nguyên để khôi phục sau này khi cần luồng đăng ký Kiosk công khai.
- * ----------------------------------------------------------------------------
- *
- * import { PageHeader } from '../components/PageHeader.js';
- * import { PayOSPaymentModal } from '../components/PayOSPaymentModal.js';
- * import { FacebookVerificationModal } from '../components/FacebookVerificationModal.js';
- * import { FacebookApiService } from '../services/FacebookApiService.js';
- * import { BusinessTypeService } from '../services/BusinessTypeService.js';
- * import { CategoryService } from '../services/CategoryService.js';
- * import { RegistrationService } from '../services/RegistrationService.js';
- * import { formatCurrency } from '../utils/currency.js';
- * import { formatDate } from '../utils/date.js';
- *
- * const STEPS = ['Thông tin khách hàng', 'Loại hình và thời hạn', 'Thanh toán'];
- * // ... (form 3 bước: thông tin KH + xác thực FB, chọn loại hình/số tháng/giảm giá,
- * //      xem lại và thanh toán PayOS rồi gọi RegistrationService.submit)
- * // Toàn bộ mã nguồn cũ có trong lịch sử git (commit trước khi rút gọn form đăng ký).
- * ==========================================================================*/

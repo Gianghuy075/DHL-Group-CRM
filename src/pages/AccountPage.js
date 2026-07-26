@@ -235,21 +235,8 @@ function renderAccountContent() {
             />
           </label>
 
-          <label class="form-group">
-            <span>Số lượng Bạn bè / Followers *</span>
-            <input
-              class="form-control"
-              id="account-facebook-friends"
-              type="number"
-              min="100"
-              placeholder="355"
-              value="${customer?.friend_count || 355}"
-              required
-            />
-          </label>
-
           <div class="form-group" id="facebook-id-preview-box">
-            <span class="form-label">Facebook ID tự động trích xuất:</span>
+            <span class="form-label">Mã Facebook ID dạng số (Numeric UID 1000...):</span>
             <div class="id-preview-val code-text" id="account-facebook-id-text">
               ${customer?.facebook_id ? escapeHtml(customer.facebook_id) : 'Nhập link Facebook'}
             </div>
@@ -257,7 +244,7 @@ function renderAccountContent() {
 
           <div class="form-actions">
             <button class="btn-primary" type="submit" id="verify-submit-btn">
-              Xác thực Facebook ➔
+              🔍 Quét & Xác thực Facebook Tự động ➔
             </button>
           </div>
         </form>
@@ -290,12 +277,12 @@ function renderAccountContent() {
   urlInput?.addEventListener('input', (e) => {
     const val = e.target.value.trim();
     if (!val) {
-      if (idText) idText.textContent = 'Nhập link Facebook để trích xuất ID';
+      if (idText) idText.textContent = 'Nhập link Facebook để nhận diện ID số';
       return;
     }
-    const extractedId = FacebookApiService.extractFacebookId(val);
+    const numericId = FacebookApiService.resolveNumericFacebookId(val);
     if (idText) {
-      idText.textContent = extractedId ? `ID / Username: ${extractedId}` : 'ID: Đang tự động nhận diện từ URL...';
+      idText.textContent = numericId ? `ID dạng số: ${numericId}` : 'ID: Đang tự động nhận diện từ URL...';
     }
   });
 
@@ -309,66 +296,48 @@ function renderAccountContent() {
 async function handleFacebookVerification() {
   const urlInput = document.getElementById('account-facebook-url');
   const nameInput = document.getElementById('account-facebook-name');
-  const friendsInput = document.getElementById('account-facebook-friends');
   const submitBtn = document.getElementById('verify-submit-btn');
 
   const fbUrl = urlInput?.value?.trim();
   const realName = nameInput?.value?.trim() || '';
-  const realFriendCount = Number(friendsInput?.value) || 0;
 
   if (!fbUrl) {
-    Toast.show('Vui lòng nhập Link Facebook cá nhân.');
-    return;
-  }
-
-  if (!realName) {
-    Toast.show('Vui lòng nhập Tên hiển thị thực tế trên Facebook của bạn.');
-    return;
-  }
-
-  if (realFriendCount < 100) {
-    Toast.show('Yêu cầu tài khoản Facebook có tối thiểu 100 bạn bè/followers.');
+    Toast.show('Vui lòng dán Link Facebook cá nhân để quét.');
     return;
   }
 
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Đang gọi Facebook Graph API v19.0 đối soát...';
+    submitBtn.textContent = '🔍 Đang quét số lượng bạn bè & Chế độ Công khai...';
   }
 
   try {
-    const facebookId = FacebookApiService.extractFacebookId(fbUrl);
-    const verifyResult = await FacebookApiService.verifyFacebookProfile({
-      facebookId,
-      profileUrl: fbUrl,
-      realName,
-      realFriendCount,
-    });
+    const verifyResult = await FacebookApiService.scanFacebookProfile(fbUrl);
 
     if (!verifyResult.success || !verifyResult.verified) {
       Toast.show(verifyResult.message || 'Xác thực Facebook không thành công.');
       return;
     }
 
-    const { friendCount = realFriendCount, followerCount = 0, name = realName } = verifyResult;
+    const { friendCount = 0, name = realName, facebookId } = verifyResult;
 
     // Lưu vĩnh viễn kết quả xác thực vào Supabase Database bảng `customers`
     const updatedPayload = {
       id: state.customer.id,
       facebook_name: name || realName,
-      facebook_id: facebookId || verifyResult.facebookId || 'hguhys',
+      facebook_id: facebookId,
       facebook_link: fbUrl,
       facebook_verified: true,
       facebook_verified_at: new Date().toISOString(),
-      friend_count: friendCount,
-      follower_count: followerCount,
+      friend_count: Number(friendCount || 0),
+      follower_count: 0,
       is_public_profile: true,
       status: 'active',
     };
 
     await CustomerService.upsert(updatedPayload);
 
-    Toast.show(`🎉 Đã xác thực thành công tài khoản Facebook "${name}" và lưu vĩnh viễn vào CSDL!`);
+    Toast.show(`🎉 Đã quét & xác thực thành công tài khoản Facebook "${name}" (ID Số: ${facebookId}) — ${friendCount.toLocaleString()} Bạn bè!`);
 
     await loadAccountData();
     renderAccountContent();

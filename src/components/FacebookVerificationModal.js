@@ -56,26 +56,21 @@ export const FacebookVerificationModal = {
 
             <label class="form-group">
               <span>Đường dẫn Facebook Cá nhân (URL) *</span>
-              <input class="form-control" id="fb-verify-input" type="text" placeholder="https://www.facebook.com/hguhys" value="${escapeHtml(currentFacebookUrl)}" required />
+              <input class="form-control" id="fb-verify-input" type="text" placeholder="https://www.facebook.com/100088812345678" value="${escapeHtml(currentFacebookUrl)}" required />
             </label>
 
-            <label class="form-group">
-              <span>Mã ID Facebook dạng số (Numeric UID 1000...) *</span>
-              <input class="form-control" id="fb-verify-numeric-id" type="text" placeholder="100088812345678" value="${escapeHtml(currentFacebookId && /^[0-9]+$/.test(currentFacebookId) ? currentFacebookId : '')}" required />
+            <div class="form-group">
+              <span class="form-label">Mã Facebook ID dạng số (Numeric UID 1000...):</span>
+              <input class="form-control" id="fb-verify-numeric-id" type="text" placeholder="Tự động trích xuất chuỗi số UID..." value="${escapeHtml(currentFacebookId && /^[0-9]+$/.test(currentFacebookId) ? currentFacebookId : '')}" readonly />
               <small class="field-optional text-gold" id="fb-detected-id-info"></small>
-            </label>
-
-            <label class="form-group">
-              <span>Số lượng Bạn bè / Followers thực tế *</span>
-              <input class="form-control" id="fb-verify-friends-count" type="number" min="100" placeholder="Ví dụ: 355" value="355" required />
-            </label>
+            </div>
 
             <div id="fb-verify-result-outlet"></div>
 
             <div class="modal-actions">
               <button class="btn-secondary" type="button" data-modal-close>Hủy</button>
               <button class="btn-primary" type="submit" id="fb-verify-submit-btn">
-                Kiểm tra qua Graph API ➔
+                🔍 Quét & Xác thực Tự động ➔
               </button>
             </div>
           </form>
@@ -90,11 +85,11 @@ export const FacebookVerificationModal = {
     const updateDetectedInfo = () => {
       const urlVal = verifyInput?.value || '';
       const resolvedNumeric = FacebookApiService.resolveNumericFacebookId(urlVal);
-      if (numericIdInput && !numericIdInput.value.trim() && resolvedNumeric) {
-        numericIdInput.value = resolvedNumeric;
+      if (numericIdInput) {
+        numericIdInput.value = resolvedNumeric || '';
       }
       if (infoEl) {
-        infoEl.textContent = resolvedNumeric ? `⚡ Mã ID dạng số: ${resolvedNumeric}` : '';
+        infoEl.textContent = resolvedNumeric ? `⚡ Đã trích xuất ID số: ${resolvedNumeric}` : '';
       }
     };
 
@@ -110,7 +105,7 @@ export const FacebookVerificationModal = {
       }
       const hint = document.querySelector('.fb-oauth-hint');
       if (hint) {
-        hint.textContent = 'Chưa cấu hình Facebook App ID — dùng cách nhập thủ công bên dưới, hoặc thêm facebook.appId vào config.local.js.';
+        hint.textContent = 'Chưa cấu hình Facebook App ID — dán link Facebook bên dưới để tự động quét & kiểm tra.';
       }
     }
 
@@ -120,8 +115,6 @@ export const FacebookVerificationModal = {
       const originalText = oauthBtn.innerHTML;
       oauthBtn.textContent = 'Đang kết nối Facebook...';
       try {
-        // Logged-in profile (has customerId) → persist on the server.
-        // Registration (no customerId, no session) → preview-only, saved later.
         const result = customerId
           ? await FacebookAuthService.verifyProfile()
           : await FacebookAuthService.verifyProfilePreview();
@@ -129,15 +122,14 @@ export const FacebookVerificationModal = {
           outlet.innerHTML = `
             <div class="status-result-box success">
               <div class="status-icon">✅</div>
-              <div class="status-title">Đã xác thực qua Facebook!</div>
+              <div class="status-title">Đã quét & xác thực qua Facebook!</div>
               <div class="status-desc">
-                Facebook Name: <strong>${escapeHtml(result?.facebookName || '')}</strong><br/>
-                Bạn bè: <strong class="text-gold">${result?.friendCount ?? 0}</strong>
+                Tên Facebook: <strong>${escapeHtml(result?.facebookName || '')}</strong><br/>
+                Bạn bè: <strong class="text-gold">${(result?.friendCount ?? 0).toLocaleString()}</strong> (Chế độ Công khai)
               </div>
             </div>
           `;
         }
-        // Normalize to the shape callers (RegisterPage.onVerified) expect.
         const normalized = {
           verified: true,
           name: result?.facebookName || '',
@@ -170,34 +162,22 @@ export const FacebookVerificationModal = {
       e.preventDefault();
       const input = document.getElementById('fb-verify-input')?.value.trim();
       const numId = document.getElementById('fb-verify-numeric-id')?.value.trim();
-      const friendsCount = Number(document.getElementById('fb-verify-friends-count')?.value) || 0;
 
       if (!input && !numId) {
-        showError('Vui lòng nhập Link Facebook cá nhân hoặc Mã ID dạng số.');
-        return;
-      }
-
-      if (friendsCount < 100) {
-        showError('Số lượng bạn bè/followers phải đạt tối thiểu 100.');
+        showError('Vui lòng nhập Link Facebook cá nhân để quét.');
         return;
       }
 
       const submitBtn = document.getElementById('fb-verify-submit-btn');
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Đang gọi Facebook Graph API...';
+        submitBtn.textContent = '🔍 Đang quét số bạn bè & Chế độ công khai...';
       }
 
       clearError();
 
       try {
-        const result = await FacebookApiService.verifyFacebookProfile({
-          profileUrl: input,
-          facebookId: numId,
-          realFriendCount: friendsCount,
-          minFriends: 100,
-        });
-
+        const result = await FacebookApiService.scanFacebookProfile(input || numId);
         const outlet = document.getElementById('fb-verify-result-outlet');
 
         if (result.verified) {
@@ -205,11 +185,11 @@ export const FacebookVerificationModal = {
             outlet.innerHTML = `
               <div class="status-result-box success">
                 <div class="status-icon">✅</div>
-                <div class="status-title">Xác thực Facebook Thành Công!</div>
+                <div class="status-title">Quét Facebook Thành Công!</div>
                 <div class="status-desc">
-                  Facebook Name: <strong>${escapeHtml(result.name)}</strong> (ID Số: <code>${escapeHtml(result.facebookId)}</code>)<br/>
-                  Bạn bè / Followers: <strong class="text-gold">${result.friendCount}</strong> (Đạt chuẩn >= 100)<br/>
-                  Chế độ: <strong class="text-green">Công khai / Creator Mode</strong>
+                  Tên Facebook: <strong>${escapeHtml(result.name)}</strong> (ID Số: <code>${escapeHtml(result.facebookId)}</code>)<br/>
+                  Bạn bè / Followers: <strong class="text-gold">${result.friendCount.toLocaleString()}</strong> (Đạt chuẩn >= 100)<br/>
+                  Chế độ: <strong class="text-green">Công khai / Professional Mode</strong>
                 </div>
               </div>
             `;
@@ -226,7 +206,7 @@ export const FacebookVerificationModal = {
             });
           }
 
-          Toast.show('Đã xác thực tài khoản Facebook thành công!');
+          Toast.show('Đã quét và xác thực tài khoản Facebook thành công!');
           setTimeout(async () => {
             Modal.close();
             await onVerified?.(result);
@@ -246,11 +226,11 @@ export const FacebookVerificationModal = {
         }
 
       } catch (err) {
-        showError(err?.message || 'Lỗi khi gọi Facebook Graph API.');
+        showError(err?.message || 'Lỗi khi quét tài khoản Facebook.');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Kiểm tra qua Graph API v19.0 ➔';
+          submitBtn.textContent = '🔍 Quét & Xác thực Tự động ➔';
         }
       }
     });
