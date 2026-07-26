@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient.js';
 import { WalletService } from './WalletService.js';
 import { FacebookApiService } from './FacebookApiService.js';
+import { applyPagination, applySort, requireSupabaseClient, runQuery } from './BaseService.js';
 
 export const TASK_TYPES = [
   { id: 'like_post', name: 'Like chéo', icon: '👍', defaultPrice: 500, category: 'Like' },
@@ -63,15 +64,32 @@ export const FacebookTaskService = {
   },
 
   /**
-   * List active tasks available in the Task Marketplace (Người B). The BE
-   * already excludes the worker's own tasks and ones they've submitted.
+   * List active tasks available in the Task Marketplace (Người B).
    */
-  async listActiveTasks({ taskType = '' } = {}) {
+  async listActiveTasks({ taskType = '', workerId = '' } = {}) {
     try {
-      return await apiClient.get('/facebook-tasks', taskType ? { taskType } : undefined);
+      const supabase = requireSupabaseClient();
+      let query = supabase
+        .from('facebook_tasks')
+        .select('*')
+        .eq('status', 'active');
+
+      if (taskType) {
+        query = query.eq('task_type', taskType);
+      }
+      if (workerId) {
+        query = query.neq('creator_id', workerId);
+      }
+
+      query = query.order('created_at', { ascending: false });
+      const { data } = await runQuery(query);
+      return { data: data || [] };
     } catch (err) {
-      console.warn('[FacebookTaskService] Failed to list active tasks:', err);
-      return { data: [] };
+      try {
+        return await apiClient.get('/facebook-tasks', taskType ? { taskType } : undefined);
+      } catch (e) {
+        return { data: [] };
+      }
     }
   },
 
@@ -81,10 +99,19 @@ export const FacebookTaskService = {
   async listTasksByCreator(creatorId) {
     if (!creatorId) return { data: [] };
     try {
-      return await apiClient.get('/facebook-tasks/mine');
+      const supabase = requireSupabaseClient();
+      const { data } = await supabase
+        .from('facebook_tasks')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .order('created_at', { ascending: false });
+      return { data: data || [] };
     } catch (err) {
-      console.warn('[FacebookTaskService] Failed to list creator tasks:', err);
-      return { data: [] };
+      try {
+        return await apiClient.get('/facebook-tasks/mine');
+      } catch (e) {
+        return { data: [] };
+      }
     }
   },
 

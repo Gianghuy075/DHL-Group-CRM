@@ -19,6 +19,8 @@ const CUSTOMER_MUTABLE_FIELDS = [
 // Talks to the NestJS backend (GET/POST/PATCH /customers). Public method
 // signatures and return shapes match the old Supabase-backed service, so pages
 // and components need no changes.
+import { applyPagination, applySort, requireSupabaseClient, runQuery } from './BaseService.js';
+
 export const CustomerService = {
   async list({
     searchTerm = '',
@@ -27,18 +29,44 @@ export const CustomerService = {
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
-    return apiClient.get('/customers', {
-      searchTerm,
-      status,
-      kioskState,
-      sortColumn: sort?.column || 'created_at',
-      sortAscending: sort?.ascending !== false,
-      page: Number(pagination?.page || 1),
-      pageSize: Number(pagination?.pageSize || 25),
-    });
+    try {
+      const supabase = requireSupabaseClient();
+      let query = supabase.from('customers').select('*', { count: 'exact' });
+
+      if (searchTerm) {
+        const pattern = `%${searchTerm}%`;
+        query = query.or(`facebook_name.ilike.${pattern},facebook_id.ilike.${pattern},phone.ilike.${pattern}`);
+      }
+      if (status) query = query.eq('status', status);
+
+      query = applySort(query, sort);
+      query = applyPagination(query, pagination);
+
+      const { data, count } = await runQuery(query);
+      return { data, count };
+    } catch (err) {
+      return apiClient.get('/customers', {
+        searchTerm,
+        status,
+        kioskState,
+        sortColumn: sort?.column || 'created_at',
+        sortAscending: sort?.ascending !== false,
+        page: Number(pagination?.page || 1),
+        pageSize: Number(pagination?.pageSize || 25),
+      });
+    }
   },
 
   async getById(id) {
+    try {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (!error && data) return { data };
+    } catch (err) {}
     return apiClient.get(`/customers/${id}`);
   },
 

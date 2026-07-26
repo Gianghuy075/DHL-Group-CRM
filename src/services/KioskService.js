@@ -18,6 +18,8 @@ const KIOSK_MUTABLE_FIELDS = [
 // Talks to the NestJS backend (GET/POST/PATCH /kiosks). Public method
 // signatures and return shapes match the old Supabase-backed service, so pages
 // and components need no changes. Search/status filtering now runs on the BE.
+import { applyPagination, applySort, requireSupabaseClient, runQuery } from './BaseService.js';
+
 export const KioskService = {
   async list({
     searchTerm = '',
@@ -27,24 +29,54 @@ export const KioskService = {
     sort = { column: 'created_at', ascending: false },
     pagination,
   } = {}) {
-    return apiClient.get('/kiosks', {
-      searchTerm,
-      status,
-      businessTypeId,
-      customerId,
-      sortColumn: sort?.column || 'created_at',
-      sortAscending: sort?.ascending === true,
-      page: Number(pagination?.page || 1),
-      pageSize: Number(pagination?.pageSize || 20),
-    });
+    try {
+      const supabase = requireSupabaseClient();
+      let query = supabase
+        .from('kiosks')
+        .select('*, business_types(id, name, price_per_month), categories(id, name), customers(id, facebook_name)', { count: 'exact' });
+
+      if (searchTerm) {
+        const pattern = `%${searchTerm}%`;
+        query = query.or(`facebook_name.ilike.${pattern},facebook_id.ilike.${pattern}`);
+      }
+      if (status) query = query.eq('status', status);
+      if (businessTypeId) query = query.eq('business_type_id', businessTypeId);
+      if (customerId) query = query.eq('customer_id', customerId);
+
+      query = applySort(query, sort);
+      query = applyPagination(query, pagination);
+
+      const { data, count } = await runQuery(query);
+      return { data, count };
+    } catch (err) {
+      return apiClient.get('/kiosks', {
+        searchTerm,
+        status,
+        businessTypeId,
+        customerId,
+        sortColumn: sort?.column || 'created_at',
+        sortAscending: sort?.ascending === true,
+        page: Number(pagination?.page || 1),
+        pageSize: Number(pagination?.pageSize || 20),
+      });
+    }
   },
 
   async getById(id) {
+    try {
+      const supabase = requireSupabaseClient();
+      const { data, error } = await supabase
+        .from('kiosks')
+        .select('*, business_types(id, name, price_per_month), categories(id, name), customers(id, facebook_name)')
+        .eq('id', id)
+        .maybeSingle();
+      if (!error && data) return { data };
+    } catch (err) {}
     return apiClient.get(`/kiosks/${id}`);
   },
 
   async listByCustomer(customerId) {
-    return apiClient.get(`/kiosks/by-customer/${customerId}`);
+    return KioskService.list({ customerId });
   },
 
   async create(kiosk) {

@@ -26,7 +26,7 @@ function buildQuery(params = {}) {
   return qs ? `?${qs}` : '';
 }
 
-async function request(method, path, { params, body } = {}) {
+async function request(method, path, { params, body, timeoutMs = 5000 } = {}) {
   const base = getApiBaseUrl();
   if (!base) {
     throw new Error('apiBaseUrl chưa được cấu hình. Kiểm tra config.local.js.');
@@ -40,15 +40,24 @@ async function request(method, path, { params, body } = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   let response;
   try {
     response = await fetch(url, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
   } catch (networkError) {
+    if (networkError.name === 'AbortError') {
+      throw new Error(`Kết nối API phản hồi quá chậm (> ${timeoutMs / 1000}s). Vui lòng thử lại.`);
+    }
     throw new Error(`Không kết nối được tới API (${base}). ${networkError.message}`);
+  } finally {
+    clearTimeout(timer);
   }
 
   const text = await response.text();
