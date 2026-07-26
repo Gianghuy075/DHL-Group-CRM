@@ -3,12 +3,7 @@ import { getSupabaseStatus } from '../supabase/client.js';
 export function ConnectionNotice() {
   const status = getSupabaseStatus();
   if (status.configured) {
-    return `
-      <div class="notice success">
-        <strong>Supabase đã được cấu hình.</strong>
-        <span>Lớp dữ liệu vận hành đã sẵn sàng.</span>
-      </div>
-    `;
+    return '';
   }
 
   const missing = [

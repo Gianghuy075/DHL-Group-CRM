@@ -219,8 +219,13 @@ function setActiveNavigation(route) {
 function updateSupabaseBadge(element) {
   if (!element) return;
   const status = getSupabaseStatus();
-  element.textContent = status.configured ? 'Supabase sẵn sàng' : 'Chưa kết nối Supabase';
-  element.classList.toggle('ready', status.configured);
+  if (status.configured) {
+    element.style.display = 'none';
+  } else {
+    element.style.display = '';
+    element.textContent = 'Chưa kết nối Supabase';
+    element.classList.remove('ready');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);

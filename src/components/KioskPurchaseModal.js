@@ -19,7 +19,7 @@ const state = {
 };
 
 export const KioskPurchaseModal = {
-  open({ customerId, customerName = '', onPurchased = async () => {} } = {}) {
+  open({ customerId, customerName = '', preSelectedCategoryId = '', preSelectedBusinessTypeId = '', onPurchased = async () => {} } = {}) {
     if (!customerId) {
       Toast.show('Không xác định được tài khoản để mua gói Kiosk.');
       return;
@@ -29,6 +29,8 @@ export const KioskPurchaseModal = {
     state.onPurchased = onPurchased;
     state.selectedBusinessType = null;
     state.businessTypes = [];
+    state.preSelectedCategoryId = preSelectedCategoryId;
+    state.preSelectedBusinessTypeId = preSelectedBusinessTypeId;
 
     renderForm();
     loadWallet();
@@ -120,8 +122,12 @@ async function loadCategories() {
     state.categories = data || [];
     select.innerHTML = `
       <option value="">Chọn danh mục</option>
-      ${state.categories.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name || 'Không tên')}</option>`).join('')}
+      ${state.categories.map((c) => `<option value="${escapeHtml(c.id)}" ${c.id === state.preSelectedCategoryId ? 'selected' : ''}>${escapeHtml(c.name || 'Không tên')}</option>`).join('')}
     `;
+
+    if (state.preSelectedCategoryId) {
+      await loadBusinessTypes(state.preSelectedCategoryId);
+    }
   } catch (error) {
     select.innerHTML = '<option value="">Không tải được danh mục</option>';
     showError(error?.message || 'Không thể tải danh mục.');
@@ -148,9 +154,14 @@ async function loadBusinessTypes(categoryId) {
     state.businessTypes = data || [];
     select.innerHTML = `
       <option value="">Chọn loại hình kinh doanh</option>
-      ${state.businessTypes.map((bt) => `<option value="${escapeHtml(bt.id)}">${escapeHtml(bt.name || 'Không tên')} · ${formatCurrency(bt.price_per_month || 0)}/tháng</option>`).join('')}
+      ${state.businessTypes.map((bt) => `<option value="${escapeHtml(bt.id)}" ${bt.id === state.preSelectedBusinessTypeId ? 'selected' : ''}>${escapeHtml(bt.name || 'Không tên')} · ${formatCurrency(bt.price_per_month || 0)}/tháng</option>`).join('')}
     `;
     select.disabled = false;
+
+    if (state.preSelectedBusinessTypeId) {
+      state.selectedBusinessType = state.businessTypes.find((bt) => String(bt.id) === String(state.preSelectedBusinessTypeId)) || null;
+      updateTotal();
+    }
   } catch (error) {
     select.innerHTML = '<option value="">Không tải được loại hình</option>';
     showError(error?.message || 'Không thể tải loại hình kinh doanh.');

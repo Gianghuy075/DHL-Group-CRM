@@ -39,7 +39,6 @@ export function AppLayout({ navSections, user }) {
             <div class="page-title" data-page-title>Tổng quan</div>
           </div>
           <div class="top-bar-right">
-            <span class="connection-badge" data-supabase-badge>Chưa kết nối Supabase</span>
             <span class="current-date" data-current-date></span>
           </div>
         </header>

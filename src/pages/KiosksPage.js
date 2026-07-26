@@ -1,5 +1,4 @@
 import { EmptyState } from '../components/EmptyState.js';
-import { openKioskForm } from '../components/KioskForm.js';
 import { PageHeader } from '../components/PageHeader.js';
 import { openRenewKioskForm } from '../components/RenewKioskForm.js';
 import { KioskPurchaseModal } from '../components/KioskPurchaseModal.js';
@@ -21,6 +20,7 @@ const KIOSK_STATUSES = [
 ];
 
 const state = {
+  activeTab: 'store', // 'store' or 'mykiosks'
   searchTerm: '',
   status: '',
   businessTypeId: '',
@@ -35,24 +35,175 @@ const state = {
 export function KiosksPage() {
   return `
     ${PageHeader({
-      title: 'Quản lý Kiosk',
+      title: 'Dịch vụ Kiosk Facebook',
       actions: `
-        <button class="btn-secondary" id="buy-kiosk-button" type="button">🛒 Mua gói Kiosk</button>
-        <button class="btn-primary" id="add-kiosk-button" type="button">+ Thêm Kiosk</button>
+        <button class="btn-primary" id="buy-kiosk-button" type="button">🛒 Mua gói Kiosk Mới</button>
       `,
     })}
+
+    <div class="kiosks-page-container">
+      <div class="task-tabs-bar" style="margin-bottom: 20px;">
+        <button class="task-tab ${state.activeTab === 'store' ? 'active' : ''}" type="button" data-kiosk-tab="store">
+          🛒 Danh mục Gói Kiosk Đang Mở Bán
+        </button>
+        <button class="task-tab ${state.activeTab === 'mykiosks' ? 'active' : ''}" type="button" data-kiosk-tab="mykiosks">
+          📱 Kiosk Của Tôi
+        </button>
+      </div>
+
+      <div id="kiosk-tab-content">
+        <div class="empty-state"><div class="spinner-small"></div> Đang tải...</div>
+      </div>
+    </div>
+  `;
+}
+
+KiosksPage.afterRender = async function afterRenderKiosks() {
+  bindTabEvents();
+  bindGlobalEvents();
+  await loadKioskStoreCatalog();
+  renderTabContent();
+};
+
+function bindTabEvents() {
+  document.querySelectorAll('[data-kiosk-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.activeTab = btn.dataset.kioskTab;
+      document.querySelectorAll('[data-kiosk-tab]').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTabContent();
+    });
+  });
+}
+
+function bindGlobalEvents() {
+  document.getElementById('buy-kiosk-button')?.addEventListener('click', async () => {
+    await openPurchaseModal();
+  });
+}
+
+async function openPurchaseModal(preSelectedCategoryId = '', preSelectedBusinessTypeId = '') {
+  let profile = state.currentProfile;
+  if (!profile) {
+    const session = await AuthService.getCurrentSession();
+    profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
+    state.currentProfile = profile;
+  }
+  if (!profile?.id) return;
+
+  KioskPurchaseModal.open({
+    customerId: profile.id,
+    customerName: profile.display_name || '',
+    preSelectedCategoryId,
+    preSelectedBusinessTypeId,
+    onPurchased: async () => {
+      state.activeTab = 'mykiosks';
+      const myTab = document.querySelector('[data-kiosk-tab="mykiosks"]');
+      if (myTab) {
+        document.querySelectorAll('[data-kiosk-tab]').forEach((b) => b.classList.remove('active'));
+        myTab.classList.add('active');
+      }
+      renderTabContent();
+    },
+  });
+}
+
+function renderTabContent() {
+  const content = document.getElementById('kiosk-tab-content');
+  if (!content) return;
+
+  if (state.activeTab === 'store') {
+    renderStoreTab(content);
+  } else {
+    renderMyKiosksTab(content);
+  }
+}
+
+/**
+ * TAB 1: Store Catalog (Danh mục Gói Kiosk Đang Mở Bán)
+ */
+async function renderStoreTab(container) {
+  if (!state.businessTypes.length) {
+    container.innerHTML = `<div class="empty-state"><div class="spinner-small"></div> Đang đọc danh mục gói Kiosk...</div>`;
+    await loadKioskStoreCatalog();
+  }
+
+  if (!state.businessTypes.length) {
+    container.innerHTML = EmptyState({
+      title: 'Chưa có gói Kiosk nào mở bán',
+      message: 'Vui lòng quay lại sau hoặc liên hệ quản trị viên.',
+    });
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="kiosk-store-grid">
+      ${state.businessTypes.map(renderPackageCard).join('')}
+    </div>
+  `;
+
+  // Bind Store Buy Click Buttons
+  container.querySelectorAll('[data-buy-package]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const btId = btn.dataset.buyPackage;
+      const catId = btn.dataset.categoryId;
+      await openPurchaseModal(catId, btId);
+    });
+  });
+}
+
+function renderPackageCard(bt) {
+  const categoryName = bt.categories?.name || 'Gói Dịch Vụ';
+  const price = formatCurrency(bt.price_per_month || 0);
+
+  return `
+    <article class="kiosk-package-card">
+      <div>
+        <span class="package-category-badge">${escapeHtml(categoryName)}</span>
+        <h3 class="package-title">🏬 ${escapeHtml(bt.name || 'Gói Kiosk')}</h3>
+        <div class="package-desc">${escapeHtml(bt.description || 'Đã bao gồm tính năng tự động đăng bài, chăm sóc Kiosk 24/7 và đối soát tương tác CRM.')}</div>
+      </div>
+
+      <div>
+        <div class="package-price-box">
+          <div class="package-price">${price} <span class="package-period">/ tháng</span></div>
+        </div>
+        <button class="btn-primary full-width" type="button" data-buy-package="${escapeHtml(bt.id)}" data-category-id="${escapeHtml(bt.category_id)}">
+          🛒 Chọn Mua Gói Này ➔
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+async function loadKioskStoreCatalog() {
+  try {
+    const { data } = await BusinessTypeService.list({ status: 'active' });
+    state.businessTypes = data || [];
+  } catch (error) {
+    console.warn('[KiosksPage] Failed to load business types catalog:', error);
+    state.businessTypes = [];
+  }
+}
+
+/**
+ * TAB 2: My Kiosks (Kiosk Của Tôi)
+ */
+async function renderMyKiosksTab(container) {
+  container.innerHTML = `
     ${Toolbar({
       children: `
         <input
           type="search"
           id="kiosk-search"
           class="form-control"
-          placeholder="Tìm theo Facebook ID, tên Facebook, loại hình KD, trạng thái"
+          placeholder="Tìm theo Facebook ID, tên Facebook, loại hình KD"
           aria-label="Tìm Kiosk"
           autocomplete="off"
         />
         <select id="kiosk-business-type-filter" class="filter-select" aria-label="Lọc loại hình kinh doanh">
           <option value="">Tất cả loại hình KD</option>
+          ${state.businessTypes.map((bt) => `<option value="${escapeHtml(bt.id)}">${escapeHtml(bt.name)}</option>`).join('')}
         </select>
         <select id="kiosk-status-filter" class="filter-select" aria-label="Lọc trạng thái">
           <option value="">Tất cả trạng thái</option>
@@ -61,7 +212,7 @@ export function KiosksPage() {
       `,
     })}
     <div class="kiosk-grid" id="kiosk-grid">
-      ${EmptyState({ title: 'Đang tải Kiosk', message: 'Đang đọc dữ liệu từ Supabase.' })}
+      ${EmptyState({ title: 'Đang tải Kiosk', message: 'Đang đọc dữ liệu...' })}
     </div>
     <div class="pagination-bar">
       <div id="kiosks-page-summary" class="pagination-summary">—</div>
@@ -74,14 +225,11 @@ export function KiosksPage() {
       </div>
     </div>
   `;
-}
 
-KiosksPage.afterRender = function afterRenderKiosks() {
   syncKioskControls();
-  bindKioskEvents();
-  loadBusinessTypeOptions();
-  loadKiosks();
-};
+  bindMyKiosksEvents();
+  await loadKiosks();
+}
 
 function syncKioskControls() {
   const searchInput = document.getElementById('kiosk-search');
@@ -95,42 +243,12 @@ function syncKioskControls() {
   if (pageSizeSelect) pageSizeSelect.value = String(state.pageSize);
 }
 
-function bindKioskEvents() {
+function bindMyKiosksEvents() {
   const searchInput = document.getElementById('kiosk-search');
   const statusFilter = document.getElementById('kiosk-status-filter');
   const businessTypeFilter = document.getElementById('kiosk-business-type-filter');
   const pageSizeSelect = document.getElementById('kiosks-page-size');
   const grid = document.getElementById('kiosk-grid');
-
-  document.getElementById('add-kiosk-button')?.addEventListener('click', () => {
-    openKioskForm({
-      onSaved: async () => {
-        state.status = 'pending';
-        state.page = 1;
-        syncKioskControls();
-        await loadKiosks();
-      },
-    });
-  });
-
-  document.getElementById('buy-kiosk-button')?.addEventListener('click', async () => {
-    let profile = state.currentProfile;
-    if (!profile) {
-      const session = await AuthService.getCurrentSession();
-      profile = session?.user?.id ? await AuthService.getCurrentProfile(session.user.id) : null;
-    }
-    if (!profile?.id) {
-      return;
-    }
-    KioskPurchaseModal.open({
-      customerId: profile.id,
-      customerName: profile.display_name || '',
-      onPurchased: async () => {
-        state.page = 1;
-        await loadKiosks();
-      },
-    });
-  });
 
   searchInput?.addEventListener('input', debounce((event) => {
     state.searchTerm = event.target.value.trim();
@@ -179,26 +297,6 @@ function bindKioskEvents() {
   });
 }
 
-async function loadBusinessTypeOptions() {
-  const select = document.getElementById('kiosk-business-type-filter');
-  if (!select) return;
-
-  select.disabled = true;
-
-  try {
-    const { data } = await BusinessTypeService.listActive();
-    state.businessTypes = data || [];
-    renderBusinessTypeOptions();
-  } catch (error) {
-    state.businessTypes = [];
-    select.innerHTML = `
-      <option value="">Không tải được loại hình KD</option>
-    `;
-  } finally {
-    select.disabled = false;
-  }
-}
-
 async function loadKiosks() {
   const requestId = state.requestId + 1;
   state.requestId = requestId;
@@ -229,27 +327,14 @@ async function loadKiosks() {
   }
 }
 
-function renderBusinessTypeOptions() {
-  const select = document.getElementById('kiosk-business-type-filter');
-  if (!select) return;
-
-  select.innerHTML = `
-    <option value="">Tất cả loại hình KD</option>
-    ${state.businessTypes.map((item) => `
-      <option value="${escapeHtml(item.id)}">${escapeHtml(item.name || 'Không tên')}</option>
-    `).join('')}
-  `;
-  select.value = state.businessTypeId;
-}
-
 function renderKiosks(kiosks) {
   const grid = document.getElementById('kiosk-grid');
   if (!grid) return;
 
   if (!kiosks.length) {
     grid.innerHTML = EmptyState({
-      title: 'Không tìm thấy Kiosk',
-      message: 'Không có bản ghi nào khớp với bộ lọc hiện tại.',
+      title: 'Chưa có Kiosk nào',
+      message: 'Bạn chưa mua gói Kiosk nào. Hãy sang tab "Danh mục Gói Kiosk" để chọn gói!',
     });
     return;
   }
@@ -273,15 +358,13 @@ function renderKioskCard(kiosk) {
       <div class="kiosk-details">
         ${kioskDetail('Facebook ID', kiosk.facebook_id)}
         ${kioskDetail('Loại hình KD', businessType)}
-        ${kioskDetail('Danh mục', category)}
         ${kioskDetail('Ngày bắt đầu', formatDate(kiosk.start_date))}
         ${kioskDetail('Ngày hết hạn', formatDate(kiosk.end_date))}
         ${kioskDetail('Tổng đã thanh toán', formatCurrency(kiosk.total_paid || 0))}
-        ${kioskDetail('Tự duyệt', kiosk.auto_approve ? 'Có' : 'Không')}
       </div>
       <div class="kiosk-card-footer">
         <div class="inline-actions">
-          <a class="table-link" href="#/kiosk-detail?id=${encodeURIComponent(kiosk.id)}">Xem chi tiết</a>
+          <a class="table-link" href="#/kiosk-detail?id=${encodeURIComponent(kiosk.id)}">Chi tiết</a>
           <button class="table-action-button" type="button" data-kiosk-renew="${escapeHtml(kiosk.id)}">Gia hạn</button>
         </div>
         <span class="kiosk-id">ID: ${escapeHtml(kiosk.id || '—')}</span>
@@ -305,7 +388,7 @@ function setLoadingState() {
   if (grid) {
     grid.innerHTML = EmptyState({
       title: 'Đang tải Kiosk',
-      message: 'Đang đọc dữ liệu từ Supabase.',
+      message: 'Đang đọc dữ liệu...',
     });
   }
 }
@@ -316,7 +399,7 @@ function renderError(error) {
   if (grid) {
     grid.innerHTML = EmptyState({
       title: 'Không thể tải Kiosk',
-      message: escapeHtml(error?.message || 'Supabase trả về lỗi khi đọc bảng kiosks.'),
+      message: escapeHtml(error?.message || 'Đã có lỗi xảy ra khi đọc danh sách Kiosk.'),
     });
   }
   renderPagination();
