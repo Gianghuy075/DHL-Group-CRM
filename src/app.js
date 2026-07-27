@@ -25,6 +25,7 @@ import { StaffPage } from './pages/StaffPage.js';
 import { FacebookTasksPage } from './pages/FacebookTasksPage.js';
 import { TaskReviewPage } from './pages/TaskReviewPage.js';
 import { AccountPage } from './pages/AccountPage.js';
+import { LandingPage } from './pages/LandingPage.js';
 import { WalletService } from './services/WalletService.js';
 import { WalletTopupModal } from './components/WalletTopupModal.js';
 import { formatCurrency } from './utils/currency.js';
@@ -47,6 +48,8 @@ const routes = {
   'registration-requests': RegistrationRequestsPage,
   staff: StaffPage,
   profile: AccountPage,
+  store: LandingPage,
+  landing: LandingPage,
 };
 
 async function initApp() {
@@ -56,6 +59,11 @@ async function initApp() {
   try {
     const session = await AuthService.initialize();
     const initialRoute = getRouteName();
+
+    if (initialRoute === 'store' || initialRoute === 'landing' || initialRoute === 'buy') {
+      renderPublicLanding(root);
+      return;
+    }
 
     if (!session && initialRoute === 'register') {
       renderPublicRegistration(root);
@@ -80,11 +88,18 @@ async function initApp() {
   }
 }
 
+function renderPublicLanding(root) {
+  root.innerHTML = LandingPage();
+  Modal.mount();
+  Toast.mount();
+  LandingPage.afterRender?.();
+}
+
 function getRoleConfig(role) {
   if (role === 'user') {
     return {
       navSections: USER_NAV_SECTIONS,
-      allowedRoutes: new Set(['facebook-tasks', 'kiosks', 'kiosk-detail', 'payments', 'profile']),
+      allowedRoutes: new Set(['facebook-tasks', 'kiosks', 'kiosk-detail', 'payments', 'profile', 'store', 'landing']),
       defaultRoute: 'facebook-tasks',
     };
   }

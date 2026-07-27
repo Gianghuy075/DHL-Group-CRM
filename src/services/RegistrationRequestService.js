@@ -22,4 +22,39 @@ export const RegistrationRequestService = {
       reason_input: reason,
     }));
   },
+
+  async submitGuestRequest({
+    facebookName,
+    facebookLink,
+    facebookId = '',
+    phone,
+    businessTypeId,
+    categoryId,
+    months = 1,
+    totalAmount,
+    note = '',
+  }) {
+    const supabase = requireSupabaseClient();
+    const payload = {
+      facebook_name: facebookName,
+      facebook_id: facebookId || '100088812345678',
+      facebook_link: facebookLink,
+      phone: phone || '',
+      business_type_id: businessTypeId,
+      category_id: categoryId || null,
+      months: Number(months),
+      total_amount: Number(totalAmount),
+      status: 'pending',
+      submitted_at: new Date().toISOString(),
+      note: note ? `[LandingPage Guest] ${note}` : '[Mua Trực Tiếp từ Landing Page]',
+    };
+
+    return runQuery(
+      supabase
+        .from('registration_requests')
+        .insert([payload])
+        .select()
+        .single(),
+    );
+  },
 };
