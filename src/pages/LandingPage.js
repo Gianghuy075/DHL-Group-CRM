@@ -313,9 +313,9 @@ function openGuestCheckoutModal(pkg) {
   const pricePerMonth = Number(pkg.price_per_month || 0);
   const cat = state.categories.find((c) => c.id === pkg.category_id);
 
-  Modal.show({
+  Modal.open({
     title: `🛒 Mua Gói Kiosk: ${pkg.name}`,
-    content: `
+    body: `
       <div class="guest-checkout-wrapper">
         <div class="guest-package-summary">
           <div class="summary-item">
@@ -484,9 +484,9 @@ function openGuestCheckoutModal(pkg) {
 }
 
 function openPayOSQRModal({ orderCode, amount, qrCode, description, accountNo, accountName, kioskName, requestId }) {
-  Modal.show({
+  Modal.open({
     title: `💳 Thanh Toán Qua Cổng PayOS - Đơn hàng #${orderCode}`,
-    content: `
+    body: `
       <div class="payos-modal-container">
         <div class="payos-success-header">
           <span class="payos-badge-icon font-emoji">🎉</span>
