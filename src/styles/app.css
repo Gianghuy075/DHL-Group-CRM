@@ -3212,9 +3212,9 @@ select option:checked,
 }
 
 .landing-container {
-  max-width: 1240px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 40px;
 }
 
 .landing-header {
@@ -3228,9 +3228,9 @@ select option:checked,
 }
 
 .landing-header-container {
-  max-width: 1240px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3320,9 +3320,9 @@ select option:checked,
 }
 
 .hero-subtitle {
-  font-size: 17px;
+  font-size: 18px;
   color: #94a3b8;
-  max-width: 760px;
+  max-width: 960px;
   margin: 0 auto 36px;
   line-height: 1.6;
 }
@@ -3370,9 +3370,9 @@ select option:checked,
 
 .hero-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  max-width: 1040px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -3465,8 +3465,8 @@ select option:checked,
 
 .landing-packages-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 28px;
 }
 
 .landing-package-card {
