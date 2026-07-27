@@ -47,11 +47,7 @@ export function LandingPage() {
       <section class="landing-hero-section">
         <div class="hero-bg-glow"></div>
         <div class="landing-container hero-content">
-          <div class="hero-badge">
-            <span class="badge-icon font-emoji">✨</span>
-            <span>HỆ THỐNG BÁN & ĐĂNG KÝ KIOSK TỰ ĐỘNG KHÔNG CẦN TÀI KHOẢN</span>
-          </div>
-
+          
           <h1 class="hero-title">
             Sở Hữu <span class="gradient-text">Gói Kiosk Tương Tác</span><br/>
             Kích Hoạt Tự Động Qua VietQR 24/7
@@ -549,5 +545,27 @@ function openPayOSQRModal({ orderCode, amount, qrCode, description, accountNo, a
   document.getElementById('payos-copy-content')?.addEventListener('click', () => {
     navigator.clipboard.writeText(description);
     Toast.show('Đã sao chép nội dung chuyển khoản!');
+  });
+
+  // Real-time PayOS API Status Polling
+  let pollInterval = setInterval(async () => {
+    try {
+      const statusRes = await PayOSService.checkPaymentStatus(orderCode);
+      const statusEl = document.getElementById('payos-modal-status');
+      if (statusRes.isPaid || statusRes.status === 'PAID') {
+        clearInterval(pollInterval);
+        if (statusEl) {
+          statusEl.className = 'payment-status-badge success';
+          statusEl.innerHTML = '🎉 ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG VIA PAYOS!';
+        }
+        Toast.show('🎉 Đã nhận chuyển khoản thanh toán thành công qua cổng PayOS!');
+      }
+    } catch (e) {}
+  }, 3000);
+
+  // Clear interval on modal close
+  const cleanup = () => clearInterval(pollInterval);
+  document.querySelectorAll('[data-modal-close]').forEach((btn) => {
+    btn.addEventListener('click', cleanup, { once: true });
   });
 }
