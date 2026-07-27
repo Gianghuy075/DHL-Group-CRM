@@ -60,8 +60,8 @@ async function initApp() {
     const session = await AuthService.initialize();
     const initialRoute = getRouteName();
 
-    if (initialRoute === 'store' || initialRoute === 'landing' || initialRoute === 'buy') {
-      renderPublicLanding(root);
+    if (!session && initialRoute === 'login') {
+      renderLogin(root);
       return;
     }
 
@@ -70,8 +70,9 @@ async function initApp() {
       return;
     }
 
+    // Unauthenticated default route -> Landing Page (Cửa hàng Kiosk)
     if (!session) {
-      renderLogin(root);
+      renderPublicLanding(root);
       return;
     }
 
@@ -84,11 +85,14 @@ async function initApp() {
 
     renderAuthenticatedApp(root, profile);
   } catch (error) {
-    renderLogin(root, error?.message || 'Không thể khởi tạo phiên đăng nhập.');
+    renderPublicLanding(root);
   }
 }
 
 function renderPublicLanding(root) {
+  if (getRouteName() !== 'store' && getRouteName() !== 'landing') {
+    window.location.hash = '#/store';
+  }
   root.innerHTML = LandingPage();
   Modal.mount();
   Toast.mount();
