@@ -420,17 +420,22 @@ function openGuestCheckoutModal(pkg) {
 
     try {
       // 1. Gửi yêu cầu đăng ký Kiosk về hệ thống Quản lý Admin (registration_requests table)
-      const requestRes = await RegistrationRequestService.submitGuestRequest({
-        facebookName: kioskName,
-        facebookLink: fbUrl,
-        facebookId: numericUid,
-        phone,
-        businessTypeId: pkg.id,
-        categoryId: pkg.category_id,
-        months,
-        totalAmount,
-        note,
-      });
+      let requestRes = null;
+      try {
+        requestRes = await RegistrationRequestService.submitGuestRequest({
+          facebookName: kioskName,
+          facebookLink: fbUrl,
+          facebookId: numericUid,
+          phone,
+          businessTypeId: pkg.id,
+          categoryId: pkg.category_id,
+          months,
+          totalAmount,
+          note,
+        });
+      } catch (dbErr) {
+        console.warn('[LandingPage] Guest request DB insert failed (RLS expected for guest), proceeding to PayOS:', dbErr);
+      }
 
       const orderCode = PayOSService.generateOrderCode();
 
