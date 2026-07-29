@@ -49,20 +49,17 @@ export function LandingPage() {
         <div class="landing-container hero-content">
           
           <h1 class="hero-title">
-            Sở Hữu <span class="gradient-text">Gói Kiosk Tương Tác</span><br/>
-            Kích Hoạt Tự Động Qua VietQR 24/7
+            Tăng Tương Tác Kiosk Siêu Tốc <br/>
+            <span class="gradient-text">Mua Trực Tiếp - Không Cần Đăng Ký!</span>
           </h1>
 
           <p class="hero-subtitle">
-            Không cần đăng ký rườm rà. Chọn gói Kiosk mong muốn ➔ Nhập link Facebook ➔ Quét mã VietQR ➔ Kiosk được đăng ký và ghi nhận ngay lập tức lên hệ thống quản trị!
+            Chọn Gói ➔ Nhập Link ➔ Quét Mã ➔ Xong. Mọi thứ tự động kích hoạt 24/7.
           </p>
 
           <div class="hero-cta-group">
-            <a href="#store-catalog" class="btn-hero-primary">
-              🛒 Chọn Gói Kiosk & Thanh Toán Ngay ➔
-            </a>
-            <a href="#landing-features" class="btn-hero-secondary">
-              ⚡ Xem Demo Tính Năng Kiosk
+            <a href="#store-catalog" class="btn-hero-primary hero-btn-lg">
+              🛒 Mua Gói Kiosk Ngay ➔
             </a>
           </div>
 
@@ -71,32 +68,32 @@ export function LandingPage() {
             <div class="hero-stat-card">
               <div class="stat-icon">⚡</div>
               <div class="stat-body">
-                <strong>Thanh Toán Tự Động</strong>
-                <span>Tự động quét VietQR PayOS nhận diện 3s</span>
+                <strong>Siêu Tốc 3s</strong>
+                <span>Nhận diện thanh toán</span>
               </div>
             </div>
 
             <div class="hero-stat-card">
-              <div class="stat-icon">🚫</div>
+              <div class="stat-icon">🚀</div>
               <div class="stat-body">
-                <strong>Không Cần Đăng Ký</strong>
-                <span>Mua nhanh không yêu cầu tạo tài khoản</span>
+                <strong>Mua Trực Tiếp</strong>
+                <span>Không tạo tài khoản</span>
               </div>
             </div>
 
             <div class="hero-stat-card">
-              <div class="stat-icon">📊</div>
+              <div class="stat-icon">🤖</div>
               <div class="stat-body">
-                <strong>Ghi Nhận Quản Lý</strong>
-                <span>Thông tin gửi trực tiếp về Admin duyệt</span>
+                <strong>Tự Động 100%</strong>
+                <span>Hệ thống xử lý 24/7</span>
               </div>
             </div>
 
             <div class="hero-stat-card">
               <div class="stat-icon">🛡️</div>
               <div class="stat-body">
-                <strong>Bảo Hành 100%</strong>
-                <span>Hỗ trợ kỹ thuật 24/7 chuyên nghiệp</span>
+                <strong>Uy Tín Tối Đa</strong>
+                <span>Bảo hành chuyên nghiệp</span>
               </div>
             </div>
           </div>
@@ -107,9 +104,9 @@ export function LandingPage() {
       <section id="store-catalog" class="landing-store-section">
         <div class="landing-container">
           <div class="section-header center">
-            <div class="section-tag font-emoji">🏪 DANH MỤC GÓI KIOSK MỞ BÁN</div>
-            <h2 class="section-title">Chọn Gói Dịch Vụ Kiosk Phù Hợp Cho Bạn</h2>
-            <p class="section-desc">Giá niêm yết minh bạch. Đăng ký dễ dàng và tự động kích hoạt ngay lập tức.</p>
+            <div class="section-tag font-emoji">🏪 CỬA HÀNG GÓI KIOSK</div>
+            <h2 class="section-title">Chọn Gói & Mua Ngay</h2>
+            <p class="section-desc">Giá niêm yết rõ ràng. Kích hoạt tức thì.</p>
           </div>
 
           <!-- Category Filter Tabs -->
@@ -130,21 +127,21 @@ export function LandingPage() {
       <section id="landing-features" class="landing-features-section">
         <div class="landing-container">
           <div class="section-header center">
-            <div class="section-tag font-emoji">⚡ TÍNH NĂNG VƯỢT TRỘI</div>
-            <h2 class="section-title">Tại Sao Nên Chọn KioskHub?</h2>
+            <div class="section-tag font-emoji">⚡ TÍNH NĂNG</div>
+            <h2 class="section-title">Khác Biệt Của KioskHub</h2>
           </div>
 
           <div class="features-grid">
             <div class="feature-card">
               <div class="feature-icon font-emoji">🚀</div>
-              <h3>Kéo Tương Tác Tự Động</h3>
-              <p>Tăng like, comment, share, theo dõi tự động cho bài viết, group và fanpage của bạn.</p>
+              <h3>Tương Tác Tự Động</h3>
+              <p>Tăng like, comment, share, theo dõi tự nhiên và hoàn toàn tự động.</p>
             </div>
 
             <div class="feature-card">
               <div class="feature-icon font-emoji">💳</div>
-              <h3>Mã VietQR Động Chuẩn PayOS</h3>
-              <p>Tự động tạo mã QR chính xác số tiền và nội dung chuyển khoản, kiểm tra thanh toán ngay lập tức.</p>
+              <h3>Thanh Toán PayOS</h3>
+              <p>Quét mã QR chuẩn, hệ thống tự duyệt đơn và kích hoạt ngay lập tức.</p>
             </div>
 
             <div class="feature-card">
