@@ -46,57 +46,67 @@ export function LandingPage() {
       <!-- Hero Section -->
       <section class="landing-hero-section">
         <div class="hero-bg-glow"></div>
-        <div class="landing-container hero-content">
+        <div class="landing-container hero-content-split">
           
-          <h1 class="hero-title">
-            Tăng Tương Tác Kiosk Siêu Tốc <br/>
-            <span class="gradient-text">Mua Trực Tiếp - Không Cần Đăng Ký!</span>
-          </h1>
+          <div class="hero-text-col">
+            <h1 class="hero-title">
+              Tăng Tương Tác Kiosk Siêu Tốc <br/>
+              <span class="gradient-text">Mua Trực Tiếp - Không Cần Đăng Ký!</span>
+            </h1>
 
-          <p class="hero-subtitle">
-            Chọn Gói ➔ Nhập Link ➔ Quét Mã ➔ Xong. Mọi thứ tự động kích hoạt 24/7.
-          </p>
+            <p class="hero-subtitle">
+              Chọn Gói ➔ Nhập Link ➔ Quét Mã ➔ Xong. Mọi thứ tự động kích hoạt 24/7.
+            </p>
 
-          <div class="hero-cta-group">
-            <a href="#store-catalog" class="btn-hero-primary hero-btn-lg">
-              🛒 Mua Gói Kiosk Ngay ➔
-            </a>
+            <div class="hero-cta-group">
+              <a href="#store-catalog" class="btn-hero-primary hero-btn-lg">
+                🛒 Mua Gói Kiosk Ngay ➔
+              </a>
+            </div>
+
+            <!-- Feature Highlights Badges -->
+            <div class="hero-stats-grid">
+              <div class="hero-stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-body">
+                  <strong>Siêu Tốc 3s</strong>
+                  <span>Nhận diện thanh toán</span>
+                </div>
+              </div>
+
+              <div class="hero-stat-card">
+                <div class="stat-icon">🚀</div>
+                <div class="stat-body">
+                  <strong>Mua Trực Tiếp</strong>
+                  <span>Không tạo tài khoản</span>
+                </div>
+              </div>
+
+              <div class="hero-stat-card">
+                <div class="stat-icon">🤖</div>
+                <div class="stat-body">
+                  <strong>Tự Động 100%</strong>
+                  <span>Hệ thống xử lý 24/7</span>
+                </div>
+              </div>
+
+              <div class="hero-stat-card">
+                <div class="stat-icon">🛡️</div>
+                <div class="stat-body">
+                  <strong>Uy Tín Tối Đa</strong>
+                  <span>Bảo hành chuyên nghiệp</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Feature Highlights Badges -->
-          <div class="hero-stats-grid">
-            <div class="hero-stat-card">
-              <div class="stat-icon">⚡</div>
-              <div class="stat-body">
-                <strong>Siêu Tốc 3s</strong>
-                <span>Nhận diện thanh toán</span>
-              </div>
-            </div>
-
-            <div class="hero-stat-card">
-              <div class="stat-icon">🚀</div>
-              <div class="stat-body">
-                <strong>Mua Trực Tiếp</strong>
-                <span>Không tạo tài khoản</span>
-              </div>
-            </div>
-
-            <div class="hero-stat-card">
-              <div class="stat-icon">🤖</div>
-              <div class="stat-body">
-                <strong>Tự Động 100%</strong>
-                <span>Hệ thống xử lý 24/7</span>
-              </div>
-            </div>
-
-            <div class="hero-stat-card">
-              <div class="stat-icon">🛡️</div>
-              <div class="stat-body">
-                <strong>Uy Tín Tối Đa</strong>
-                <span>Bảo hành chuyên nghiệp</span>
-              </div>
+          <div class="hero-image-col">
+            <div class="hero-art-wrapper">
+              <img src="assets/images/hero-art.jpg" alt="Kiosk System Art" class="hero-art-img" />
+              <div class="hero-art-overlay"></div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -161,22 +171,39 @@ export function LandingPage() {
 
       <!-- Landing Footer -->
       <footer class="landing-footer">
-        <div class="landing-container footer-content">
+        <div class="landing-container footer-content-grid">
           <div class="footer-brand">
             <div class="brand-logo font-emoji">🏪</div>
             <div class="brand-name">KioskHub<span class="text-gold">.vn</span></div>
-            <p>Hệ thống cung cấp & quản lý các gói Kiosk dịch vụ tương tác Facebook tự động hàng đầu.</p>
+            <p>Hệ thống cung cấp & quản lý các gói Kiosk dịch vụ tương tác Facebook tự động hàng đầu. Tăng trưởng doanh số và nhận diện thương hiệu bền vững.</p>
           </div>
 
-          <div class="footer-links">
-            <a href="#store-catalog">Mua Gói Kiosk</a>
-            <a href="#/login">Đăng nhập Admin</a>
-            <a href="#/register">Đăng ký Đại lý</a>
+          <div class="footer-links-grid">
+            <div class="link-column">
+              <h4>Sản Phẩm</h4>
+              <a href="#store-catalog">Mua Gói Kiosk</a>
+              <a href="#landing-features">Tính Năng Nổi Bật</a>
+              <a href="#">Bảng Giá Dịch Vụ</a>
+              <a href="#">Đối Tác & Đại Lý</a>
+            </div>
+            <div class="link-column">
+              <h4>Hỗ Trợ</h4>
+              <a href="#">Hướng Dẫn Sử Dụng</a>
+              <a href="#">Câu Hỏi Thường Gặp</a>
+              <a href="#">Điều Khoản Dịch Vụ</a>
+              <a href="#">Chính Sách Bảo Mật</a>
+            </div>
+            <div class="link-column">
+              <h4>Tài Khoản</h4>
+              <a href="#/login">Đăng Nhập Quản Trị</a>
+              <a href="#/register">Mở Tài Khoản Mới</a>
+              <a href="#">Tra Cứu Đơn Hàng</a>
+              <a href="#">Lịch Sử Giao Dịch</a>
+            </div>
           </div>
-
-          <div class="footer-copy">
-            © 2026 KioskHub.vn - DHL Group CRM. All rights reserved.
-          </div>
+        </div>
+        <div class="footer-bottom">
+          © 2026 KioskHub.vn - DHL Group CRM. All rights reserved.
         </div>
       </footer>
     </div>
@@ -267,10 +294,12 @@ function renderPackageCard(pkg) {
 
   return `
     <div class="landing-package-card">
-      <div class="package-card-header">
-        <span class="package-cat-badge">${escapeHtml(catName)}</span>
-        <h3 class="package-name">${escapeHtml(pkg.name)}</h3>
-      </div>
+      <div class="package-card-img" style="background-image: url('assets/images/service-bg.jpg')"></div>
+      <div class="package-card-inner">
+        <div class="package-card-header">
+          <span class="package-cat-badge">${escapeHtml(catName)}</span>
+          <h3 class="package-name">${escapeHtml(pkg.name)}</h3>
+        </div>
 
       <div class="package-price-box">
         <div class="price-val">${priceFormatted}</div>
@@ -289,6 +318,7 @@ function renderPackageCard(pkg) {
       <button class="btn-buy-package" type="button" data-buy-package-id="${pkg.id}">
         🛒 Mua Ngay — Không Cần Đăng Ký ➔
       </button>
+      </div>
     </div>
   `;
 }
